@@ -31,7 +31,7 @@ export default async function Home() {
             {data.now.map((m:any) => <div key={m.id} className='aspect-[2/3] bg-zinc-800 rounded-xl'/>)}
           </div>
         </div>
-      </section>
+        </section>
     </main>
   );
 }
