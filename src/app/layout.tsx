@@ -1,4 +1,4 @@
-import QueryProvider from "@/presentation/providers/query-client.tsx";
+import QueryProvider from "@/presentation/providers/query-client";
 import './globals.css';
 // import { Query } from "@tanstack/react-query";
 
