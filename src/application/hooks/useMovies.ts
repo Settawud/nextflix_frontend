@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 
-import type { FeaturedRails, MovieSummary } from '@domain/models/movie';
+import type { FeaturedRails, MovieSummary } from '@domain/entities/movie';
 import { apiGet } from '@data/http/movieClient';
 
 export function useFeatured() {

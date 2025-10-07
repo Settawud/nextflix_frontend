@@ -1,13 +1,22 @@
-import QueryProvider from "@/presentation/providers/query-client";
-import './globals.css';
-// import { Query } from "@tanstack/react-query";
+import type { Metadata } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
+import "./globals.css";
+import { Providers } from "@/app/providers";
 
-export default function RootLayout({ children }:{ children:React.ReactNode }) {
-  return (<html lang="en">
-    <body>
-      <QueryProvider>
-        {children}
-      </QueryProvider>
-    </body>
-  </html>);
+const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
+const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
+
+export const metadata: Metadata = {
+  title: "Nextflix",
+  description: "Discover movies powered by the Nextflix platform",
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <body className={`${geistSans.variable} ${geistMono.variable} bg-slate-950 text-white antialiased`}>
+        <Providers>{children}</Providers>
+      </body>
+    </html>
+  );
 }
