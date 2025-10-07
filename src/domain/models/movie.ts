@@ -6,7 +6,7 @@ export interface MovieSummary {
     voteAverage: number;
 }
 
-export interface FeatureRails {
+export interface FeaturedRails {
     trending: MovieSummary[];
     top: MovieSummary[];
     now: MovieSummary[];
