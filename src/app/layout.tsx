@@ -1,6 +1,6 @@
 import QueryProvider from "@/presentation/providers/query-client.tsx";
 import './globals.css';
-import { Query } from "@tanstack/react-query";
+// import { Query } from "@tanstack/react-query";
 
 export default function RootLayout({ children }:{ children:React.ReactNode }) {
   return (<html lang="en">

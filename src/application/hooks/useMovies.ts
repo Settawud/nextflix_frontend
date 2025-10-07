@@ -1,15 +1,16 @@
-"use client";
+import { FeaturedRails, MovieSummary } from '@domain/models/movie';
 
-import { useQuery } from "@tanstack/react-query";
-import { apiGet } from "@data/http/movieClient";
-
-export function useFeatured() {
-    return useQuery({
+export function useFeature() {
+    return useQuery<FeaturedRails>({
         queryKey: ['featured'],
-        queryFn: () => apiGet<{ trending: any[]; top: any[]; now: any[]}>('/api/movies/featured')
+        queryFn: () => apiGet<FeaturedRails>('/api/movies/featured'),
     });
 }
 
 export function useSearch(q: string) {
-    return useQuery({ queryKey: ['search', q], queryFn: () => apiGet<any[]>(`/api/movies/search?q=${encodeURIComponent(q)}`), enabled: !!q });
+    return useQuery<MovieSummary[]>({
+        queryKey: ['search', q],
+        queryFn: () => apiGet<MovieSummary[]>(`/api/movies/search?q=${encodeURIComponent(q)}`),
+        enabled: q.length > 0,
+    });
 }

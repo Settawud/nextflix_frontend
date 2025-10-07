@@ -1,4 +1,12 @@
-export default function MovieRail({ title, items, state }: { title: string; items: any[]; state: 'loading' | 'error' | 'success' }) {
+import type { MovieSummary } from "@/domain/models/movie";
+
+type MovieRailProps = {
+    title: string;
+    items: MovieSummary[];
+    state: 'loading' | 'error' | 'success';
+}
+
+export default function MovieRail({ title, items, state }: MovieRailProps) {
     return (
         <section className="my-6">
             <h2 className="text-xl font-semibold mb-2">{title}</h2>
@@ -8,4 +16,6 @@ export default function MovieRail({ title, items, state }: { title: string; item
                 {items.map((m:any) => <div key={m.id} className="aspect-[2/3] bg-zinc-800 rounded-xl"/>)}</div>}
         </section>
         );
+
+
     }

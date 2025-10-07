@@ -1,14 +1,20 @@
 import { env } from '@config/environment';
-async function getFeatured() {
-  const res = await fetch(`${env.apiBaseUrl}/api/movies/featured`, { next: { revalidate: 60 }});
+import type { FeaturedRails, MovieSummary } from '@domain/models/movie';
+
+async function getFeatured(): Promise<FeaturedRails> {
+  const res = await fetch(`${env.apiBaseUrl}/api/movies/featured`, { headers: { Authorization: `Bearer ${env.apiKey}` }, next: { revalidate: 60 }});
+  
   if (!res.ok) {
     throw new Error('Failed to fetch featured movies');
   }
-  return res.json();
+  return res.json() as Promise<FeaturedRails>;
 }
 
 export default async function Home() {
   const data = await getFeatured();
+  const renderCard = (movie: MovieSummary) => (
+    <div key={movie.id} className='aspect-[2/3] bg-zinc-800 rounded-xl'/>
+  );)
   return (
     <main className='p-4 max-w-6xl mx-auto'>
       <h1 className='text-3xl font-bold mb-4'>Featured Movies</h1>
@@ -16,19 +22,19 @@ export default async function Home() {
         <div>
           <h2 className='text-xl font-semibold mb-2'>Trending</h2>
           <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3'>
-            {data.trending.map((m:any) => <div key={m.id} className='aspect-[2/3] bg-zinc-800 rounded-xl'/>)}
+            {data.trending.map(renderCard)}
           </div>
         </div>
         <div>
           <h2 className='text-xl font-semibold mb-2'>Top Rated</h2>
           <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3'>
-            {data.top.map((m:any) => <div key={m.id} className='aspect-[2/3] bg-zinc-800 rounded-xl'/>)}
+            {data.top.map(renderCard)}
           </div>
         </div>
         <div>
           <h2 className='text-xl font-semibold mb-2'>Now Playing</h2>
           <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3'>
-            {data.now.map((m:any) => <div key={m.id} className='aspect-[2/3] bg-zinc-800 rounded-xl'/>)}
+            {data.now.map(renderCard)}
           </div>
         </div>
         </section>
