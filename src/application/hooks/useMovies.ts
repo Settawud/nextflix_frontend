@@ -1,9 +1,9 @@
-import { FeaturedRails, MovieSummary } from '@domain/models/movie';
+import { FeatureRails, MovieSummary } from '@domain/models/movie';
 
 export function useFeature() {
-    return useQuery<FeaturedRails>({
+    return useQuery<FeatureRails>({
         queryKey: ['featured'],
-        queryFn: () => apiGet<FeaturedRails>('/api/movies/featured'),
+        queryFn: () => apiGet<FeatureRails>('/api/movies/featured'),
     });
 }
 
