@@ -1,4 +1,4 @@
-import { env } fromt '@config/environment';
+import { env } from '@config/environment';
 export default async function Page({ params }: { params: { id: string } } ){
     const d = await fetch(`${env.apiBaseUrl}/api/movies/${params.id}`, { next: { revalidate: 120 }}).then(r => r.json());
     return (
