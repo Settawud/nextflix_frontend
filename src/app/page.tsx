@@ -2,7 +2,8 @@ import { env } from '@config/environment';
 import type { FeatureRails, MovieSummary } from '@domain/models/movie';
 
 async function getFeatured(): Promise<FeatureRails> {
-  const res = await fetch(`${env.apiBaseUrl}/api/movies/featured`, { headers: { Authorization: `Bearer ${env.apiKey}` }, next: { revalidate: 60 }});
+  const res = await fetch(`${env.apiBaseUrl}/api/movies/featured`, 
+    { next: { revalidate: 60 }});
   
   if (!res.ok) {
     throw new Error('Failed to fetch featured movies');
