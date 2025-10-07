@@ -14,7 +14,8 @@ export default async function Home() {
   const data = await getFeatured();
   const renderCard = (movie: MovieSummary) => (
     <div key={movie.id} className='aspect-[2/3] bg-zinc-800 rounded-xl'/>
-  );)
+  );
+  
   return (
     <main className='p-4 max-w-6xl mx-auto'>
       <h1 className='text-3xl font-bold mb-4'>Featured Movies</h1>
