@@ -1,5 +1,5 @@
 import { env } from '@config/environment';
-import type { FeaturedRails, MovieSummary } from '@domain/models/movie';
+import type { FeatureRails, MovieSummary } from '@domain/models/movie';
 
 async function getFeatured(): Promise<FeaturedRails> {
   const res = await fetch(`${env.apiBaseUrl}/api/movies/featured`, { headers: { Authorization: `Bearer ${env.apiKey}` }, next: { revalidate: 60 }});
@@ -15,7 +15,7 @@ export default async function Home() {
   const renderCard = (movie: MovieSummary) => (
     <div key={movie.id} className='aspect-[2/3] bg-zinc-800 rounded-xl'/>
   );
-  
+
   return (
     <main className='p-4 max-w-6xl mx-auto'>
       <h1 className='text-3xl font-bold mb-4'>Featured Movies</h1>
