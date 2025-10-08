@@ -88,6 +88,7 @@ This layered split mirrors the backend contracts, enabling easy swapping of the 
 1. **Dynamic movie branding** – per-title assets (logo, textless backdrop) fetched on demand with caching to reduce API chatter.
 2. **Hero overview enrichment** – client fetches detailed movie info to display curated summaries without overloading the initial payload.
 3. **Fine-grained responsiveness** – mask gradients on rails, backdrop gradient overlays, and header behaviour adapt smoothly across breakpoints.
+4. **Light/Dark theme toggle** – powered by `next-themes`, stored per-user with smooth transitions across the entire surface.
 
 ## Deployment
 
