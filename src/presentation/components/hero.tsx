@@ -208,7 +208,7 @@ export const Hero = ({ detail, assets }: HeroProps) => {
                 className={cn(
                   'flex h-11 w-11 items-center justify-center rounded-full text-lg md:h-12 md:w-12',
                   isDark ? 'text-black' : 'text-white'
-                ))}
+                )}
               >
                 <PlayIcon className="ml-[2px] h-6 w-6" />
               </span>
