@@ -2,6 +2,7 @@
 
 import { PropsWithChildren, useMemo } from "react";
 import { DependencyProvider } from "@presentation/providers/dependency-provider";
+import { ThemeProvider } from "@presentation/providers/theme-provider";
 import QueryProvider from "@presentation/providers/query-client";
 import { MovieRepositoryImpl } from "@data/repositories/movie.repository.impl";
 import { createMockMovieApiClient } from "@data/datasources/mock/movie-api.client";
@@ -19,8 +20,10 @@ export const Providers = ({ children }: PropsWithChildren) => {
   }, []);
 
   return (
-    <QueryProvider>
-      <DependencyProvider repository={repository}>{children}</DependencyProvider>
-    </QueryProvider>
+    <ThemeProvider attribute="class" defaultTheme="dark">
+      <QueryProvider>
+        <DependencyProvider repository={repository}>{children}</DependencyProvider>
+      </QueryProvider>
+    </ThemeProvider>
   );
 };
