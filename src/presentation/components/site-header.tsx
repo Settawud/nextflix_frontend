@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { memo, useCallback, useEffect, useMemo, useState, type ReactElement, type SVGProps } from 'react';
 import { useTheme } from 'next-themes';
+import { cn } from '@utils/cn';
 
 type ThemeMode = 'light' | 'dark';
 
@@ -56,9 +57,6 @@ const CloseIcon = (props: SVGProps<SVGSVGElement>) => (
     <line x1="6" y1="6" x2="18" y2="18" />
   </svg>
 );
-
-const cn = (...classes: Array<string | false | null | undefined>) =>
-  classes.filter(Boolean).join(' ');
 
 const headerTokens = {
   light: {
