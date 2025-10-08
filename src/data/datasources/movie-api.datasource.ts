@@ -10,6 +10,10 @@ export type MovieSummaryDto = {
 };
 
 export type FeaturedRailsDto = {
+  hero: {
+    detail: MovieDetailDto;
+    assets: MovieAssetsDto | null;
+  } | null;
   trending: MovieSummaryDto[];
   top: MovieSummaryDto[];
   now: MovieSummaryDto[];
@@ -50,6 +54,12 @@ export const mapSummary = (dto: MovieSummaryDto): MovieSummary => ({
 });
 
 export const mapFeaturedRails = (dto: FeaturedRailsDto): FeaturedRails => ({
+  hero: dto.hero
+    ? {
+        detail: mapDetail(dto.hero.detail),
+        assets: dto.hero.assets ? mapAssets(dto.hero.assets) : null,
+      }
+    : null,
   trending: dto.trending.map(mapSummary),
   top: dto.top.map(mapSummary),
   now: dto.now.map(mapSummary),

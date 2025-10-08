@@ -94,7 +94,9 @@ export const MovieCard = ({ movie }: MovieCardProps) => {
           alt={movie.title}
           fill
           className="object-cover transition-transform duration-200 group-hover:scale-105"
-          sizes="(max-width: 768px) 40vw, (max-width: 1200px) 30vw, 20vw"
+          sizes="(max-width: 768px) 60vw, (max-width: 1200px) 30vw, 20vw"
+          loading="lazy"
+          decoding="async"
         />
       ) : (
         <div className={`absolute inset-0 ${isDark ? 'bg-slate-800' : 'bg-slate-200'}`} />

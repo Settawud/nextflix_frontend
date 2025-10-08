@@ -1,12 +1,12 @@
 'use client';
 
-import { useMemo } from 'react';
+import { Suspense, useMemo } from 'react';
+import dynamic from 'next/dynamic';
 
 import { useFeaturedMovies } from '@presentation/hooks/use-featured-movies';
 import { SiteHeader } from '@presentation/components/site-header';
 import { Hero } from '@presentation/components/hero';
 import { HeroSkeleton } from '@presentation/components/hero-skeleton';
-import { MovieRail } from '@presentation/components/movie-rail';
 import { RailSkeleton } from '@presentation/components/rail-skeleton';
 import { StateBanner } from '@presentation/components/state-banner';
 import { useIsDarkTheme } from '@presentation/hooks/use-is-dark-theme';
@@ -23,15 +23,19 @@ export const HomeScreen = () => {
     ? 'relative z-10 -mt-20 rounded-t-3xl bg-gradient-to-b from-black/60 via-black to-black pb-16 pt-10 sm:-mt-24 md:-mt-32'
     : 'relative z-10 -mt-20 rounded-t-3xl bg-white pb-16 pt-10 sm:-mt-24 md:-mt-32';
 
-  const heroMovie = useMemo(() => {
-    if (!featuredQuery.data) return null;
-    return featuredQuery.data.trending.at(0) ?? null;
-  }, [featuredQuery.data]);
+  const heroPayload = featuredQuery.data?.hero ?? null;
 
   const otherTrending = useMemo(() => {
-    if (!featuredQuery.data) return [];
-    return featuredQuery.data.trending.slice(1);
-  }, [featuredQuery.data]);
+    const trending = featuredQuery.data?.trending ?? [];
+    if (!heroPayload) {
+      return trending;
+    }
+    const heroId = heroPayload.detail.id;
+    if (trending[0]?.id === heroId) {
+      return trending.slice(1);
+    }
+    return trending.filter((movie) => movie.id !== heroId);
+  }, [featuredQuery.data, heroPayload]);
 
   const topRail = featuredQuery.data?.top ?? [];
   const nowRail = featuredQuery.data?.now ?? [];
@@ -70,7 +74,10 @@ export const HomeScreen = () => {
     );
   }
 
-  if (!featuredQuery.data || (featuredQuery.data.trending.length === 0 && featuredQuery.data.top.length === 0)) {
+  if (
+    !featuredQuery.data ||
+    (featuredQuery.data.trending.length === 0 && featuredQuery.data.top.length === 0 && featuredQuery.data.now.length === 0)
+  ) {
     return (
       <div className={`${pageClass} transition-colors duration-300`}>
         <SiteHeader />
@@ -89,15 +96,31 @@ export const HomeScreen = () => {
     <div className={`${pageClass} transition-colors duration-300`}>
       <SiteHeader />
       <main className="flex flex-col">
-        {heroMovie ? <Hero movie={heroMovie} /> : <HeroSkeleton />}
+        {heroPayload ? <Hero detail={heroPayload.detail} assets={heroPayload.assets} /> : <HeroSkeleton />}
         <div className={`${railShellClass} transition-colors duration-300`}>
           <div className="mx-auto w-full max-w-[2560px] space-y-12 px-6 sm:px-10 lg:px-16 xl:px-[90px]">
-            <MovieRail title="Popular on Nextflix" movies={otherTrending} />
-            <MovieRail title="Top Picks For You" movies={topRail} />
-            <MovieRail title="Now Streaming" movies={nowRail} />
+            <Suspense fallback={<RailSkeleton />}>
+              <MovieRail title="Popular on Nextflix" movies={otherTrending} />
+            </Suspense>
+            <Suspense fallback={<RailSkeleton />}>
+              <MovieRail title="Top Picks For You" movies={topRail} />
+            </Suspense>
+            <Suspense fallback={<RailSkeleton />}>
+              <MovieRail title="Now Streaming" movies={nowRail} />
+            </Suspense>
           </div>
         </div>
       </main>
     </div>
   );
 };
+const MovieRail = dynamic(
+  () =>
+    import('@presentation/components/movie-rail').then(
+      ({ MovieRail: Component }) => Component,
+    ),
+  {
+    ssr: false,
+    loading: () => <RailSkeleton />,
+  },
+);

@@ -1,3 +1,5 @@
+import type { MovieAssets } from './movie-assets';
+
 export type MovieSummary = {
   id: number;
   title: string;
@@ -6,14 +8,20 @@ export type MovieSummary = {
   voteAverage: number;
 };
 
-export type FeaturedRails = {
-  trending: MovieSummary[];
-  top: MovieSummary[];
-  now: MovieSummary[];
-};
-
 export type MovieDetail = MovieSummary & {
   overview: string;
   releaseDate: string | null;
   genres: string[];
+};
+
+export type FeaturedHero = {
+  detail: MovieDetail;
+  assets: MovieAssets | null;
+} | null;
+
+export type FeaturedRails = {
+  hero: FeaturedHero;
+  trending: MovieSummary[];
+  top: MovieSummary[];
+  now: MovieSummary[];
 };
