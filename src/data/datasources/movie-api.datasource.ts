@@ -1,4 +1,5 @@
 import type { FeaturedRails, MovieDetail, MovieSummary } from '@domain/entities/movie';
+import type { MovieAssets } from '@domain/entities/movie-assets';
 
 export type MovieSummaryDto = {
   id: number;
@@ -20,17 +21,31 @@ export type MovieDetailDto = MovieSummaryDto & {
   genres: string[];
 };
 
+export type MovieAssetsDto = {
+  id: number;
+  title: string;
+  backdropPath: string | null;
+  textlessBackdropPath: string | null;
+  logoPath: string | null;
+};
+
 export interface MovieApiClient {
   fetchFeaturedRails(): Promise<FeaturedRailsDto>;
   searchMovies(query: string): Promise<MovieSummaryDto[]>;
   fetchMovieDetail(id: number): Promise<MovieDetailDto | null>;
+  fetchMovieAssets(id: number): Promise<MovieAssetsDto | null>;
 }
+
+const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p';
+
+const buildImageUrl = (path: string | null, size: string) =>
+  path ? `${TMDB_IMAGE_BASE}/${size}${path}` : null;
 
 export const mapSummary = (dto: MovieSummaryDto): MovieSummary => ({
   id: dto.id,
   title: dto.title,
-  posterPath: dto.posterPath,
-  backdropPath: dto.backdropPath,
+  posterPath: buildImageUrl(dto.posterPath, 'w342'),
+  backdropPath: buildImageUrl(dto.backdropPath, 'w1280'),
   voteAverage: dto.voteAverage,
 });
 
@@ -45,4 +60,12 @@ export const mapDetail = (dto: MovieDetailDto): MovieDetail => ({
   overview: dto.overview,
   releaseDate: dto.releaseDate,
   genres: dto.genres,
+});
+
+export const mapAssets = (dto: MovieAssetsDto): MovieAssets => ({
+  id: dto.id,
+  title: dto.title,
+  backdropUrl: buildImageUrl(dto.backdropPath, 'w1280'),
+  textlessBackdropUrl: buildImageUrl(dto.textlessBackdropPath, 'w1280'),
+  logoUrl: buildImageUrl(dto.logoPath, 'w500'),
 });

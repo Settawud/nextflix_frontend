@@ -2,6 +2,7 @@ import type {
   FeaturedRailsDto,
   MovieApiClient,
   MovieDetailDto,
+  MovieAssetsDto,
   MovieSummaryDto,
 } from '../movie-api.datasource';
 
@@ -52,5 +53,17 @@ export const createMockMovieApiClient = (): MovieApiClient => ({
       genres: ['Drama'],
     };
     return detail;
+  },
+  async fetchMovieAssets(id: number) {
+    const match = demoSummaries.find((item) => item.id === id);
+    if (!match) return null;
+    const assets: MovieAssetsDto = {
+      id: match.id,
+      title: match.title,
+      backdropPath: match.backdropPath,
+      textlessBackdropPath: match.backdropPath,
+      logoPath: match.posterPath,
+    };
+    return assets;
   },
 });

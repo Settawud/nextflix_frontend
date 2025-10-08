@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { useEffect, useMemo, useState, type SVGProps } from 'react';
 
 import type { MovieDetail, MovieSummary } from '@domain/entities/movie';
+import type { MovieAssets } from '@domain/entities/movie-assets';
 import { useDependencies } from '@presentation/providers/dependency-provider';
 import { TitleOverlay } from '@presentation/components/title-overlay';
 
@@ -33,6 +34,7 @@ export type HeroProps = {
 export const Hero = ({ movie }: HeroProps) => {
   const { repository } = useDependencies();
   const [detail, setDetail] = useState<MovieDetail | null>(null);
+  const [assets, setAssets] = useState<MovieAssets | null>(null);
 
   const overview = useMemo(() => {
     const source = detail?.overview ?? movie.overview ?? '';
@@ -56,7 +58,37 @@ export const Hero = ({ movie }: HeroProps) => {
     };
   }, [movie.id, repository]);
 
-  const heroBackground = movie.backdropPath ?? movie.posterPath;
+  useEffect(() => {
+    let cancelled = false;
+    setAssets(null);
+
+    repository
+      .getMovieAssets(movie.id)
+      .then((result) => {
+        if (!cancelled) {
+          setAssets(result);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setAssets(null);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [movie.id, repository]);
+
+  const heroBackground = useMemo(() => {
+    if (assets?.textlessBackdropUrl) {
+      return assets.textlessBackdropUrl;
+    }
+    if (assets?.backdropUrl) {
+      return assets.backdropUrl;
+    }
+    return movie.backdropPath ?? movie.posterPath;
+  }, [assets?.backdropUrl, assets?.textlessBackdropUrl, movie.backdropPath, movie.posterPath]);
 
   return (
     <section className="relative isolate min-h-[620px] w-full overflow-hidden bg-black text-white sm:min-h-[660px] md:min-h-[860px] lg:min-h-[900px] xl:min-h-[940px]">
@@ -79,6 +111,7 @@ export const Hero = ({ movie }: HeroProps) => {
 
           <div className="relative h-[70px] w-full max-w-[200px] sm:h-[140px] sm:max-w-[360px] md:h-[160px] md:max-w-[520px] lg:h-[180px]">
             <TitleOverlay
+              logoUrl={assets?.logoUrl ?? undefined}
               title={movie.title}
               wrapperClassName="absolute inset-0 flex items-center justify-center md:justify-start"
               imageClassName="object-contain object-center drop-shadow-[0_12px_24px_rgba(0,0,0,0.7)] md:object-left"

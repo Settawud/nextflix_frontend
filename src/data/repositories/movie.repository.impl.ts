@@ -1,6 +1,6 @@
 import type { MovieRepository } from '@domain/repositories/movie-repository';
 import type { MovieApiClient } from '@data/datasources/movie-api.datasource';
-import { mapDetail, mapFeaturedRails, mapSummary } from '@data/datasources/movie-api.datasource';
+import { mapAssets, mapDetail, mapFeaturedRails, mapSummary } from '@data/datasources/movie-api.datasource';
 
 export class MovieRepositoryImpl implements MovieRepository {
   constructor(private readonly api: MovieApiClient) {}
@@ -18,5 +18,10 @@ export class MovieRepositoryImpl implements MovieRepository {
   async getMovieById(id: number) {
     const dto = await this.api.fetchMovieDetail(id);
     return dto ? mapDetail(dto) : null;
+  }
+
+  async getMovieAssets(id: number) {
+    const dto = await this.api.fetchMovieAssets(id);
+    return dto ? mapAssets(dto) : null;
   }
 }
