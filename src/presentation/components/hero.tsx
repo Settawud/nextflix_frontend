@@ -102,20 +102,20 @@ export const Hero = ({ movie }: HeroProps) => {
       <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-b from-transparent to-[#141414]" />
       <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/80 via-black/30 to-transparent md:h-40" />
 
-      <div className="relative z-10 mx-auto flex h-full w-full max-w-[2560px] flex-col justify-end px-5 pb-24 pt-[180px] sm:px-10 sm:pt-[200px] md:justify-start md:px-12 md:pb-20 lg:pb-24 lg:pt-[180px] xl:px-[90px]">
-        <div className="flex w-full max-w-[220px] flex-col items-center gap-4 text-center md:max-w-[891px] md:items-start md:gap-8 md:text-left">
-          <div className="flex items-center justify-center gap-3 md:justify-start">
-            <Image src="/NextLogo.svg" alt="Nextflix" width={22} height={36} priority className="h-9 w-auto md:h-[58px]" />
-            <span className="text-sm font-semibold uppercase tracking-[0.4em] text-[#B9BBB9] md:text-[28px]">Series</span>
+      <div className="relative z-10 mx-auto flex h-full w-full max-w-[2560px] flex-col justify-center px-5 pb-20 pt-32 sm:px-10 sm:pb-20 sm:pt-40 md:px-12 md:pt-48 lg:justify-start lg:pb-24 lg:pt-[180px] xl:px-[90px]">
+        <div className="flex w-full max-w-[220px] flex-col items-center gap-4 text-center lg:max-w-[891px] lg:items-start lg:gap-8 lg:text-left">
+          <div className="flex items-center justify-center gap-3 lg:justify-start">
+            <Image src="/NextLogo.svg" alt="Nextflix" width={22} height={36} priority className="h-9 w-auto lg:h-[58px]" />
+            <span className="text-sm font-semibold uppercase tracking-[0.4em] text-[#B9BBB9] lg:text-[28px]">Series</span>
           </div>
 
           <div className="relative h-[70px] w-full max-w-[200px] sm:h-[140px] sm:max-w-[360px] md:h-[160px] md:max-w-[520px] lg:h-[180px]">
             <TitleOverlay
               logoUrl={assets?.logoUrl ?? undefined}
               title={movie.title}
-              wrapperClassName="absolute inset-0 flex items-center justify-center md:justify-start"
-              imageClassName="object-contain object-center drop-shadow-[0_12px_24px_rgba(0,0,0,0.7)] md:object-left"
-              fallbackClassName="text-[28px] font-black leading-[1.05] text-center sm:text-5xl md:text-left md:text-6xl lg:text-[4.2rem]"
+              wrapperClassName="absolute inset-0 flex items-center justify-center lg:justify-start"
+              imageClassName="object-contain object-center drop-shadow-[0_12px_24px_rgba(0,0,0,0.7)] lg:object-left"
+              fallbackClassName="text-[28px] font-black leading-[1.05] text-center sm:text-5xl lg:text-left lg:text-6xl xl:text-[4.2rem]"
               fallbackAs="h1"
               sizes="(max-width: 768px) 60vw, 40vw"
               priority
