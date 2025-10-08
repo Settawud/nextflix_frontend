@@ -30,7 +30,26 @@ const demoSummaries: MovieSummaryDto[] = [
   },
 ];
 
+const demoHeroDetail: MovieDetailDto = {
+  ...demoSummaries[0],
+  overview: 'A mock hero movie synopsis used while offline.',
+  releaseDate: '2024-10-01',
+  genres: ['Drama'],
+};
+
+const demoHeroAssets: MovieAssetsDto = {
+  id: demoHeroDetail.id,
+  title: demoHeroDetail.title,
+  backdropPath: demoHeroDetail.backdropPath,
+  textlessBackdropPath: demoHeroDetail.backdropPath,
+  logoPath: demoHeroDetail.posterPath,
+};
+
 const demoFeatured: FeaturedRailsDto = {
+  hero: {
+    detail: demoHeroDetail,
+    assets: demoHeroAssets,
+  },
   trending: demoSummaries,
   top: demoSummaries.slice().reverse(),
   now: demoSummaries.slice(0, 2),
