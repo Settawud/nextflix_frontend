@@ -57,40 +57,101 @@ const CloseIcon = (props: SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
-const desktopNavLinkClass = (theme: ThemeMode, isActive: boolean) => {
-  const base = 'relative text-[20px] leading-[28px] tracking-[-0.02em] transition-colors duration-200 focus:outline-none';
-  if (theme === 'dark') {
-    return `${base} ${
-      isActive
-        ? "font-semibold text-white focus-visible:text-white after:absolute after:-bottom-[6px] after:left-0 after:h-[2px] after:w-full after:bg-white after:content-['']"
-        : 'font-medium text-white/80 hover:text-white focus-visible:text-white'
-    }`;
+const cn = (...classes: Array<string | false | null | undefined>) =>
+  classes.filter(Boolean).join(' ');
+
+const headerTokens = {
+  light: {
+    desktop: {
+      idle: 'bg-gradient-to-b from-[#d8dde9]/95 via-[#a8b4d0]/50 to-transparent text-[#1a2750]',
+      scrolled: 'bg-white/92 text-[#152040] shadow-[0_8px_22px_rgba(34,52,96,0.18)] backdrop-blur',
+    },
+    mobileTop: {
+      idle: 'bg-gradient-to-b from-[#d8dde9]/95 via-[#a8b4d0]/50 to-transparent text-[#1a2750]',
+      scrolled: 'bg-white/92 text-[#152040] shadow-[0_6px_18px_rgba(32,50,92,0.16)] backdrop-blur',
+    },
+    mobileSub: 'bg-[#e9edf6] text-[#1b2d5a] border-b border-[#c2cbe3]/80',
+    nav: {
+      base: 'relative text-[20px] leading-[28px] tracking-[-0.02em] transition-colors duration-200 focus:outline-none',
+      idle: 'font-medium text-[#3a4f82] hover:text-[#102046] focus-visible:text-[#102046]',
+      active:
+        "font-semibold text-[#102046] focus-visible:text-[#102046] after:absolute after:-bottom-[6px] after:left-0 after:h-[2px] after:w-full after:bg-[#102046] after:content-['']",
+      indicator: 'text-[#102046]',
+    },
+    icon: 'hover:text-[#101e42] focus-visible:text-[#101e42]',
+    accountBadge: 'border-[#c2cadf] bg-white/85 text-[#102046]',
+    drawerSurface: 'bg-white/95 text-[#1c2f5a]',
+    drawerClose: 'hover:text-[#101e3c] focus-visible:ring-[#a2b0d6]',
+    drawerLink: {
+      base: 'flex w-full items-center justify-between rounded-lg px-4 py-3 text-left text-base font-medium transition-colors focus:outline-none focus-visible:ring-2',
+      idle: 'text-[#223666] hover:bg-[#e3e9f7] focus-visible:ring-[#b8c5ea]',
+      active: 'bg-[#102046] text-white focus-visible:ring-[#102046]/50',
+      indicator: 'text-[#c9d4f0]',
+    },
+    drawerFooter: 'text-[#253a6e]',
+  },
+  dark: {
+    desktop: {
+      idle: 'bg-black text-white',
+      scrolled: 'bg-black text-white shadow-[0_6px_20px_rgba(0,0,0,0.35)]',
+    },
+    mobileTop: {
+      idle: 'bg-black text-white',
+      scrolled: 'bg-black text-white shadow-[0_6px_18px_rgba(0,0,0,0.3)]',
+    },
+    mobileSub: 'bg-black text-white border-b border-white/10',
+    nav: {
+      base: 'relative text-[20px] leading-[28px] tracking-[-0.02em] transition-colors duration-200 focus:outline-none',
+      idle: 'font-medium text-white/80 hover:text-white focus-visible:text-white',
+      active:
+        "font-semibold text-white focus-visible:text-white after:absolute after:-bottom-[6px] after:left-0 after:h-[2px] after:w-full after:bg-white after:content-['']",
+      indicator: 'text-white/70',
+    },
+    icon: 'hover:text-white focus-visible:text-white',
+    accountBadge: 'border-white/30 bg-white/10 text-white',
+    drawerSurface: 'bg-black/95 text-white',
+    drawerClose: 'hover:text-white focus-visible:ring-white/60',
+    drawerLink: {
+      base: 'flex w-full items-center justify-between rounded-lg px-4 py-3 text-left text-base font-medium transition-colors focus:outline-none focus-visible:ring-2',
+      idle: 'text-white/80 hover:bg-white/5 focus-visible:ring-white/30',
+      active: 'bg-white/10 text-white focus-visible:ring-white/40',
+      indicator: 'text-white/70',
+    },
+    drawerFooter: 'text-white/80',
+  },
+} satisfies Record<
+  ThemeMode,
+  {
+    desktop: { idle: string; scrolled: string };
+    mobileTop: { idle: string; scrolled: string };
+    mobileSub: string;
+    nav: { base: string; idle: string; active: string; indicator: string };
+    icon: string;
+    accountBadge: string;
+    drawerSurface: string;
+    drawerClose: string;
+    drawerLink: { base: string; idle: string; active: string; indicator: string };
+    drawerFooter: string;
   }
-  return `${base} ${
-    isActive
-      ? "font-semibold text-[#102046] focus-visible:text-[#102046] after:absolute after:-bottom-[6px] after:left-0 after:h-[2px] after:w-full after:bg-[#102046] after:content-['']"
-      : 'font-medium text-[#3a4f82] hover:text-[#102046] focus-visible:text-[#102046]'
-  }`;
-};
+>;
 
-const iconButtonClass = (theme: ThemeMode) =>
-  `transition focus:outline-none ${
-    theme === 'dark'
-      ? 'hover:text-white focus-visible:text-white'
-      : 'hover:text-[#101e42] focus-visible:text-[#101e42]'
-  }`;
+const iconButtonClass = (theme: ThemeMode) => cn('transition focus:outline-none', headerTokens[theme].icon);
 
-const MobileNavLink = ({ label, theme }: { label: string; theme: ThemeMode }) => {
-  const base =
-    'flex items-center gap-1 text-lg font-medium transition focus:outline-none';
-  const hoverClass = theme === 'dark' ? 'hover:text-white focus-visible:text-white' : 'hover:text-[#102046] focus-visible:text-[#102046]';
-  return (
-    <button type="button" className={`${base} ${hoverClass}`}>
-      {label}
-      {label === 'Categories' ? <span className="text-xs">▾</span> : null}
-    </button>
-  );
-};
+const desktopNavLinkClass = (theme: ThemeMode, isActive: boolean) =>
+  cn(headerTokens[theme].nav.base, isActive ? headerTokens[theme].nav.active : headerTokens[theme].nav.idle);
+
+const MobileNavLink = ({ label, theme }: { label: string; theme: ThemeMode }) => (
+  <button
+    type="button"
+    className={cn(
+      'flex items-center gap-1 text-lg font-medium transition focus:outline-none',
+      theme === 'dark' ? 'hover:text-white focus-visible:text-white' : 'hover:text-[#102046] focus-visible:text-[#102046]',
+    )}
+  >
+    {label}
+    {label === 'Categories' ? <span className="text-xs">▾</span> : null}
+  </button>
+);
 
 type ThemeToggleButtonProps = {
   mode: ThemeMode;
@@ -111,26 +172,20 @@ const ThemeToggleButton = memo(({ mode, mounted, animating, onToggle }: ThemeTog
       <span className="absolute inset-0 animate-ping rounded-full border border-slate-300/50 dark:border-white/20" />
     )}
     {!mounted ? null : (
-      <span
-        className={`relative block text-lg transition-transform duration-500 ${
-          animating ? 'motion-safe:animate-spin' : ''
-        }`}
-      >
+      <span className={cn('relative block text-lg transition-transform duration-500', animating && 'motion-safe:animate-spin')}>
         <span
-          className={`absolute inset-0 grid place-items-center transition-all duration-500 transform ${
-            mode === 'dark'
-              ? 'opacity-100 rotate-0 scale-100'
-              : 'opacity-0 -rotate-90 scale-0'
-          }`}
+          className={cn(
+            'absolute inset-0 grid place-items-center transition-all duration-500 transform',
+            mode === 'dark' ? 'opacity-100 rotate-0 scale-100' : 'opacity-0 -rotate-90 scale-0',
+          )}
         >
           🌙
         </span>
         <span
-          className={`absolute inset-0 grid place-items-center transition-all duration-500 transform ${
-            mode === 'dark'
-              ? 'opacity-0 rotate-90 scale-0'
-              : 'opacity-100 rotate-0 scale-100'
-          }`}
+          className={cn(
+            'absolute inset-0 grid place-items-center transition-all duration-500 transform',
+            mode === 'dark' ? 'opacity-0 rotate-90 scale-0' : 'opacity-100 rotate-0 scale-100',
+          )}
         >
           ☀️
         </span>
@@ -152,44 +207,31 @@ type MobileDrawerProps = {
 const MobileDrawer = ({ open, theme, navItems, onClose, renderThemeToggle }: MobileDrawerProps) => {
   if (!open) return null;
 
-  const asideClass = theme === 'dark'
-    ? 'fixed inset-y-0 left-0 z-50 flex w-[82%] max-w-xs flex-col bg-black/95 text-white shadow-2xl backdrop-blur-md transition-[transform,opacity] duration-300 ease-out'
-    : 'fixed inset-y-0 left-0 z-50 flex w-[82%] max-w-xs flex-col bg-white/95 text-[#1c2f5a] shadow-2xl backdrop-blur-md transition-[transform,opacity] duration-300 ease-out';
-
-  const closeButtonClass = theme === 'dark'
-    ? 'rounded-full p-2 transition hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60'
-    : 'rounded-full p-2 transition hover:text-[#101e3c] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#a2b0d6]';
-
-  const linkClass = (item: NavItem) => {
-    const base = 'flex w-full items-center justify-between rounded-lg px-4 py-3 text-left text-base font-medium transition-colors focus:outline-none focus-visible:ring-2';
-    if (theme === 'dark') {
-      return `${base} ${
-        item.isActive
-          ? 'bg-white/10 text-white focus-visible:ring-white/40'
-          : 'text-white/80 hover:bg-white/5 focus-visible:ring-white/30'
-      }`;
-    }
-    return `${base} ${
-      item.isActive
-        ? 'bg-[#102046] text-white focus-visible:ring-[#102046]/50'
-        : 'text-[#223666] hover:bg-[#e3e9f7] focus-visible:ring-[#b8c5ea]'
-    }`;
-  };
-
-  const footerClass = theme === 'dark' ? 'flex items-center justify-between gap-3 px-5 pb-6 text-white/80' : 'flex items-center justify-between gap-3 px-5 pb-6 text-[#253a6e]';
+  const tokens = headerTokens[theme];
 
   return (
     <div className="pointer-events-auto lg:hidden">
       <div
-        className={`fixed inset-0 z-40 transition-opacity ${
-          theme === 'dark' ? 'bg-black/70 backdrop-blur-sm' : 'bg-slate-900/60 backdrop-blur-sm'
-        }`}
+        className={cn(
+          'fixed inset-0 z-40 transition-opacity',
+          theme === 'dark' ? 'bg-black/70 backdrop-blur-sm' : 'bg-slate-900/60 backdrop-blur-sm',
+        )}
         onClick={onClose}
       />
-      <aside className={asideClass}>
+      <aside
+        className={cn(
+          'fixed inset-y-0 left-0 z-50 flex w-[82%] max-w-xs flex-col shadow-2xl backdrop-blur-md transition-[transform,opacity] duration-300 ease-out',
+          tokens.drawerSurface,
+        )}
+      >
         <div className="flex items-center justify-between px-5 pb-4 pt-6">
           <Image src="/NextNavbar.svg" alt="Nextflix" width={96} height={28} loading="lazy" />
-          <button type="button" aria-label="Close menu" onClick={onClose} className={closeButtonClass}>
+          <button
+            type="button"
+            aria-label="Close menu"
+            onClick={onClose}
+            className={cn('rounded-full p-2 transition focus:outline-none focus-visible:ring-2', tokens.drawerClose)}
+          >
             <CloseIcon className="h-6 w-6" />
           </button>
         </div>
@@ -197,10 +239,17 @@ const MobileDrawer = ({ open, theme, navItems, onClose, renderThemeToggle }: Mob
           <ul className="space-y-2">
             {navItems.map((item) => (
               <li key={item.label}>
-                <button type="button" onClick={onClose} className={linkClass(item)}>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className={cn(
+                    tokens.drawerLink.base,
+                    item.isActive ? tokens.drawerLink.active : tokens.drawerLink.idle,
+                  )}
+                >
                   <span>{item.label}</span>
                   {item.isActive ? (
-                    <span className={theme === 'dark' ? 'text-xs uppercase tracking-[0.22em] text-white/70' : 'text-xs uppercase tracking-[0.22em] text-[#c9d4f0]'}>
+                    <span className={cn('text-xs uppercase tracking-[0.22em]', tokens.drawerLink.indicator)}>
                       Now
                     </span>
                   ) : null}
@@ -209,7 +258,7 @@ const MobileDrawer = ({ open, theme, navItems, onClose, renderThemeToggle }: Mob
             ))}
           </ul>
         </nav>
-        <div className={footerClass}>
+        <div className={cn('flex items-center justify-between gap-3 px-5 pb-6', tokens.drawerFooter)}>
           <div className="text-sm font-medium uppercase tracking-[0.1em]">Theme</div>
           {renderThemeToggle()}
         </div>
@@ -219,7 +268,9 @@ const MobileDrawer = ({ open, theme, navItems, onClose, renderThemeToggle }: Mob
 };
 
 const DesktopNav = ({ theme }: { theme: ThemeMode }) => (
-  <ul className={`flex items-center gap-7 transition-colors ${theme === 'dark' ? 'text-white' : 'text-[#2c3f75]'}`}>
+  <ul
+    className={cn('flex items-center gap-7 transition-colors', theme === 'dark' ? 'text-white' : 'text-[#2c3f75]')}
+  >
     {NAV_ITEMS.map((item) => (
       <li key={item.label}>
         <button type="button" className={desktopNavLinkClass(theme, Boolean(item.isActive))}>
@@ -238,6 +289,7 @@ export const SiteHeader = () => {
   const { theme, resolvedTheme, setTheme } = useTheme();
 
   const mode = (resolvedTheme ?? theme ?? 'dark') as ThemeMode;
+  const tokens = headerTokens[mode];
 
   const closeMobile = useCallback(() => setMobileOpen(false), []);
   const toggleMobile = useCallback(() => setMobileOpen((open) => !open), []);
@@ -278,27 +330,15 @@ export const SiteHeader = () => {
     setTheme(mode === 'dark' ? 'light' : 'dark');
   }, [mode, mounted, setTheme]);
 
-  const desktopClass = useMemo(() => {
-    if (mode === 'dark') {
-      return isScrolled ? 'bg-black text-white shadow-[0_6px_20px_rgba(0,0,0,0.35)]' : 'bg-black text-white';
-    }
-    return isScrolled
-      ? 'bg-white/92 text-[#152040] shadow-[0_6px_16px_rgba(21,32,64,0.18)] backdrop-blur-md'
-      : 'bg-gradient-to-b from-[#d8dde9]/95 via-[#a8b4d0]/50 to-transparent text-[#1a2750]';
-  }, [isScrolled, mode]);
+  const desktopClass = useMemo(
+    () => (isScrolled ? tokens.desktop.scrolled : tokens.desktop.idle),
+    [isScrolled, tokens.desktop.idle, tokens.desktop.scrolled],
+  );
 
-  const mobileTopClass = useMemo(() => {
-    if (mode === 'dark') {
-      return isScrolled
-        ? 'bg-black text-white shadow-[0_6px_18px_rgba(0,0,0,0.3)]'
-        : 'bg-black text-white';
-    }
-    return isScrolled
-      ? 'bg-white/92 text-[#152040] shadow-[0_6px_14px_rgba(21,32,64,0.18)] backdrop-blur-md'
-      : 'bg-gradient-to-b from-[#d8dde9]/95 via-[#a8b4d0]/50 to-transparent text-[#1a2750]';
-  }, [isScrolled, mode]);
-
-  const mobileSubClass = mode === 'dark' ? 'bg-black text-white' : 'bg-[#e9edf6] text-[#1b2d5a]';
+  const mobileTopClass = useMemo(
+    () => (isScrolled ? tokens.mobileTop.scrolled : tokens.mobileTop.idle),
+    [isScrolled, tokens.mobileTop.idle, tokens.mobileTop.scrolled],
+  );
 
   const renderThemeToggle = useCallback(
     () => <ThemeToggleButton mode={mode} mounted={mounted} animating={animating} onToggle={toggleTheme} />,
@@ -307,17 +347,17 @@ export const SiteHeader = () => {
 
   return (
     <header className="pointer-events-none fixed inset-x-0 top-0 z-30 flex flex-col">
-      <div className={`pointer-events-auto hidden h-[102px] w-full lg:flex transition-all duration-300 ease-out ${desktopClass}`}>
+      <div className={cn('pointer-events-auto hidden h-[102px] w-full lg:flex transition-all duration-300 ease-out', desktopClass)}>
         <nav className="mx-auto flex h-full w-full max-w-[2560px] items-center justify-between gap-8 px-6 sm:px-10 lg:px-16 xl:px-[90px]">
           <div className="flex items-center gap-12">
             <Image src="/NextNavbar.svg" alt="Nextflix" width={139} height={39} loading="lazy" />
             <DesktopNav theme={mode} />
           </div>
-          <div className={`flex items-center gap-7 transition-colors ${mode === 'dark' ? 'text-white/90' : 'text-[#2f437a]'}`}>
+          <div className={cn('flex items-center gap-7 transition-colors', mode === 'dark' ? 'text-white/90' : 'text-[#2f437a]')}>
             <button type="button" aria-label="Search" className={iconButtonClass(mode)}>
               <MagnifyingGlassIcon className="h-6 w-6" />
             </button>
-            <button type="button" className={`text-[20px] font-medium tracking-[-0.02em] ${iconButtonClass(mode)}`}>
+            <button type="button" className={cn('text-[20px] font-medium tracking-[-0.02em]', iconButtonClass(mode))}>
               Kids
             </button>
             <button type="button" aria-label="Notifications" className={iconButtonClass(mode)}>
@@ -326,19 +366,14 @@ export const SiteHeader = () => {
             <button
               type="button"
               aria-label="Account"
-              className={`flex items-center gap-2 transition focus:outline-none ${
+              className={cn(
+                'flex items-center gap-2 transition focus:outline-none',
                 mode === 'dark'
                   ? 'text-white hover:text-white focus-visible:text-white'
-                  : 'text-[#102046] hover:text-[#0a182f] focus-visible:text-[#0a182f]'
-              }`}
+                  : 'text-[#102046] hover:text-[#0a182f] focus-visible:text-[#0a182f]',
+              )}
             >
-              <div
-                className={`flex h-8 w-8 items-center justify-center rounded-md border text-sm font-semibold uppercase ${
-                  mode === 'dark'
-                    ? 'border-white/30 bg-white/10 text-white'
-                    : 'border-[#c2cadf] bg-white/80 text-[#102046]'
-                }`}
-              >
+              <div className={cn('flex h-8 w-8 items-center justify-center rounded-md border text-sm font-semibold uppercase', tokens.accountBadge)}>
                 B
               </div>
               <ChevronDownIcon className="h-4 w-4" />
@@ -349,18 +384,33 @@ export const SiteHeader = () => {
       </div>
 
       <div
-        className={`pointer-events-auto flex w-full items-center justify-between px-5 pb-4 pt-[calc(env(safe-area-inset-top,0px)+1.25rem)] lg:hidden transition-all duration-300 ease-out ${mobileTopClass}`}
+        className={cn(
+          'pointer-events-auto flex w-full items-center justify-between px-5 pb-4 pt-[calc(env(safe-area-inset-top,0px)+1.25rem)] lg:hidden transition-all duration-300 ease-out',
+          mobileTopClass,
+        )}
       >
         <Image src="/NextNavbar.svg" alt="Nextflix" width={92} height={24} loading="lazy" />
-        <div className={`flex items-center gap-4 transition-colors ${mode === 'dark' ? 'text-white/80' : 'text-[#223666]'}`}>
-          <button type="button" aria-label="Categories" aria-controls="mobile-nav-drawer" aria-expanded={mobileOpen} onClick={toggleMobile} className={iconButtonClass(mode)}>
+        <div className={cn('flex items-center gap-4 transition-colors', mode === 'dark' ? 'text-white/80' : 'text-[#223666]')}>
+          <button
+            type="button"
+            aria-label="Categories"
+            aria-controls="mobile-nav-drawer"
+            aria-expanded={mobileOpen}
+            onClick={toggleMobile}
+            className={iconButtonClass(mode)}
+          >
             <BarsIcon className="h-6 w-6" />
           </button>
           {renderThemeToggle()}
         </div>
       </div>
 
-      <div className={`pointer-events-auto flex items-center justify-between px-5 pb-4 text-sm font-medium transition-all duration-300 ease-out lg:hidden ${mobileSubClass}`}>
+      <div
+        className={cn(
+          'pointer-events-auto flex items-center justify-between px-5 pb-4 text-sm font-medium transition-all duration-300 ease-out lg:hidden',
+          tokens.mobileSub,
+        )}
+      >
         <ul className="flex w-full items-center justify-around">
           {MOBILE_SUB_ITEMS.map((item) => (
             <li key={item}>
