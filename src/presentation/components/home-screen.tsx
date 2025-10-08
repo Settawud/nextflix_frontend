@@ -9,9 +9,19 @@ import { HeroSkeleton } from '@presentation/components/hero-skeleton';
 import { MovieRail } from '@presentation/components/movie-rail';
 import { RailSkeleton } from '@presentation/components/rail-skeleton';
 import { StateBanner } from '@presentation/components/state-banner';
+import { useIsDarkTheme } from '@presentation/hooks/use-is-dark-theme';
 
 export const HomeScreen = () => {
   const featuredQuery = useFeaturedMovies();
+  const isDark = useIsDarkTheme();
+
+  const pageClass = isDark
+    ? 'relative min-h-screen bg-black text-white'
+    : 'relative min-h-screen bg-white text-slate-900';
+
+  const railShellClass = isDark
+    ? 'relative z-10 -mt-20 rounded-t-3xl bg-gradient-to-b from-black/60 via-black to-black pb-16 pt-10 sm:-mt-24 md:-mt-32'
+    : 'relative z-10 -mt-20 rounded-t-3xl bg-white pb-16 pt-10 sm:-mt-24 md:-mt-32';
 
   const heroMovie = useMemo(() => {
     if (!featuredQuery.data) return null;
@@ -28,7 +38,7 @@ export const HomeScreen = () => {
 
   if (featuredQuery.isPending) {
     return (
-      <div className="relative min-h-screen bg-black text-white">
+      <div className={`${pageClass} transition-colors duration-300`}>
         <SiteHeader />
         <main className="flex flex-col">
           <HeroSkeleton />
@@ -45,7 +55,7 @@ export const HomeScreen = () => {
 
   if (featuredQuery.isError) {
     return (
-      <div className="relative min-h-screen bg-black text-white">
+      <div className={`${pageClass} transition-colors duration-300`}>
         <SiteHeader />
         <main className="flex flex-col gap-8 px-6 pb-16 pt-32 sm:px-10 md:px-12">
           <StateBanner
@@ -62,7 +72,7 @@ export const HomeScreen = () => {
 
   if (!featuredQuery.data || (featuredQuery.data.trending.length === 0 && featuredQuery.data.top.length === 0)) {
     return (
-      <div className="relative min-h-screen bg-black text-white">
+      <div className={`${pageClass} transition-colors duration-300`}>
         <SiteHeader />
         <main className="flex flex-col gap-8 px-6 pb-16 pt-32 sm:px-10 md:px-12">
           <StateBanner
@@ -76,11 +86,11 @@ export const HomeScreen = () => {
   }
 
   return (
-    <div className="relative min-h-screen bg-black text-white">
+    <div className={`${pageClass} transition-colors duration-300`}>
       <SiteHeader />
       <main className="flex flex-col">
         {heroMovie ? <Hero movie={heroMovie} /> : <HeroSkeleton />}
-        <div className="relative z-10 -mt-20 rounded-t-3xl bg-gradient-to-b from-black/60 via-black to-black pb-16 pt-10 sm:-mt-24 md:-mt-32">
+        <div className={`${railShellClass} transition-colors duration-300`}>
           <div className="mx-auto w-full max-w-[2560px] space-y-12 px-6 sm:px-10 lg:px-16 xl:px-[90px]">
             <MovieRail title="Popular on Nextflix" movies={otherTrending} />
             <MovieRail title="Top Picks For You" movies={topRail} />
