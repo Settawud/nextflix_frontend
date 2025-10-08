@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { memo, useCallback, useEffect, useMemo, useState, type SVGProps } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState, type ReactElement, type SVGProps } from 'react';
 import { useTheme } from 'next-themes';
 
 type ThemeMode = 'light' | 'dark';
@@ -146,7 +146,7 @@ type MobileDrawerProps = {
   theme: ThemeMode;
   navItems: NavItem[];
   onClose: () => void;
-  renderThemeToggle: () => JSX.Element;
+  renderThemeToggle: () => ReactElement;
 };
 
 const MobileDrawer = ({ open, theme, navItems, onClose, renderThemeToggle }: MobileDrawerProps) => {
