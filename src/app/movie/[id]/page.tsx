@@ -1,11 +1,31 @@
-import { MovieDetail } from '@/domain/models/movie';
+import type { MovieDetail } from '@domain/entities/movie';
 import { env } from '@config/environment';
-export default async function Page({ params }: { params: { id: string } } ){
-    const movie = (await fetch(`${env.apiBaseUrl}/api/movies/${params.id}`, { next: { revalidate: 120 }}).then(r => r.json())) as MovieDetail;
-    return (
-        <main className="p-4 max-w-3xl mx-auto">
-            <h1 className="text-2xl font-bold">{movie.title}</h1>
-            <p className="opacity-80 mt-2">{movie.overview}</p>
-        </main>
-    );
+
+type PageParams = {
+  params: {
+    id: string;
+  };
+};
+
+const fetchMovie = async (id: string): Promise<MovieDetail> => {
+  const response = await fetch(`${env.apiBaseUrl}/api/movies/${id}`, {
+    next: { revalidate: 120 },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to load movie ${id} (${response.status})`);
+  }
+
+  return (await response.json()) as MovieDetail;
+};
+
+export default async function Page({ params }: PageParams) {
+  const movie = await fetchMovie(params.id);
+
+  return (
+    <main className="mx-auto max-w-3xl p-4">
+      <h1 className="text-2xl font-bold">{movie.title}</h1>
+      <p className="mt-2 opacity-80">{movie.overview}</p>
+    </main>
+  );
 }

@@ -93,7 +93,16 @@ export const Hero = ({ movie }: HeroProps) => {
   return (
     <section className="relative isolate min-h-[620px] w-full overflow-hidden bg-black text-white sm:min-h-[660px] md:min-h-[860px] lg:min-h-[900px] xl:min-h-[940px]">
       {heroBackground ? (
-        <Image src={heroBackground} alt={movie.title} fill priority sizes="100vw" className="object-cover" />
+        <Image
+          src={heroBackground}
+          alt={movie.title}
+          fill
+          priority
+          loading="eager"
+          fetchPriority="high"
+          sizes="100vw"
+          className="object-cover"
+        />
       ) : (
         <div className="absolute inset-0 bg-gradient-to-b from-[#1a1a1a] via-[#0f0f0f] to-black" />
       )}
