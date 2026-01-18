@@ -61,11 +61,11 @@ const CloseIcon = (props: SVGProps<SVGSVGElement>) => (
 const headerTokens = {
   light: {
     desktop: {
-      idle: 'bg-gradient-to-b from-[#d8dde9]/95 via-[#a8b4d0]/50 to-transparent text-[#1a2750]',
+      idle: 'bg-transparent text-[#1a2750]',
       scrolled: 'bg-white/92 text-[#152040] shadow-[0_8px_22px_rgba(34,52,96,0.18)] backdrop-blur',
     },
     mobileTop: {
-      idle: 'bg-gradient-to-b from-[#d8dde9]/95 via-[#a8b4d0]/50 to-transparent text-[#1a2750]',
+      idle: 'bg-transparent text-[#1a2750]',
       scrolled: 'bg-white/92 text-[#152040] shadow-[0_6px_18px_rgba(32,50,92,0.16)] backdrop-blur',
     },
     mobileSub: 'bg-[#e9edf6] text-[#1b2d5a] border-b border-[#c2cbe3]/80',
@@ -90,11 +90,11 @@ const headerTokens = {
   },
   dark: {
     desktop: {
-      idle: 'bg-black text-white',
+      idle: 'bg-transparent text-white',
       scrolled: 'bg-black text-white shadow-[0_6px_20px_rgba(0,0,0,0.35)]',
     },
     mobileTop: {
-      idle: 'bg-black text-white',
+      idle: 'bg-transparent text-white',
       scrolled: 'bg-black text-white shadow-[0_6px_18px_rgba(0,0,0,0.3)]',
     },
     mobileSub: 'bg-black text-white border-b border-white/10',
@@ -164,10 +164,20 @@ const ThemeToggleButton = memo(({ mode, mounted, animating, onToggle }: ThemeTog
     onClick={onToggle}
     aria-label="Toggle theme"
     aria-pressed={mode === 'dark'}
-    className="relative inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-300 bg-white text-[#0f1d3a] transition-all duration-300 hover:scale-105 hover:border-slate-500 hover:bg-white/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 dark:border-white/30 dark:bg-white/10 dark:text-white dark:hover:border-white/60 dark:hover:bg-white/20 shadow-sm dark:shadow-[0_0_10px_rgba(255,255,255,0.18)]"
+    className={cn(
+      'relative inline-flex h-9 w-9 items-center justify-center rounded-full border transition-all duration-300 hover:scale-105 focus:outline-none focus-visible:ring-2',
+      mode === 'dark'
+        ? 'border-black bg-black text-white shadow-[0_0_12px_rgba(255,255,255,0.18)] hover:border-black hover:bg-black focus-visible:ring-white/40'
+        : 'border-slate-300 bg-white text-[#0f1d3a] hover:border-slate-500 hover:bg-white/90 focus-visible:ring-slate-400',
+    )}
   >
     {animating && (
-      <span className="absolute inset-0 animate-ping rounded-full border border-slate-300/50 dark:border-white/20" />
+      <span
+        className={cn(
+          'absolute inset-0 animate-ping rounded-full border',
+          mode === 'dark' ? 'border-white/15' : 'border-slate-300/50',
+        )}
+      />
     )}
     {!mounted ? null : (
       <span className={cn('relative block text-lg transition-transform duration-500', animating && 'motion-safe:animate-spin')}>
@@ -223,7 +233,7 @@ const MobileDrawer = ({ open, theme, navItems, onClose, renderThemeToggle }: Mob
         )}
       >
         <div className="flex items-center justify-between px-5 pb-4 pt-6">
-          <Image src="/NextNavbar.svg" alt="Nextflix" width={96} height={28} loading="lazy" />
+          <Image src="/NextFlixNav.png" alt="Nextflix" width={132} height={24} loading="lazy" />
           <button
             type="button"
             aria-label="Close menu"
@@ -348,7 +358,7 @@ export const SiteHeader = () => {
       <div className={cn('pointer-events-auto hidden h-[102px] w-full lg:flex transition-all duration-300 ease-out', desktopClass)}>
         <nav className="mx-auto flex h-full w-full max-w-[2560px] items-center justify-between gap-8 px-6 sm:px-10 lg:px-16 xl:px-[90px]">
           <div className="flex items-center gap-12">
-            <Image src="/NextNavbar.svg" alt="Nextflix" width={139} height={39} loading="lazy" />
+            <Image src="/NextFlixNav.png" alt="Nextflix" width={165} height={30} loading="lazy" />
             <DesktopNav theme={mode} />
           </div>
           <div className={cn('flex items-center gap-7 transition-colors', mode === 'dark' ? 'text-white/90' : 'text-[#2f437a]')}>
@@ -387,7 +397,7 @@ export const SiteHeader = () => {
           mobileTopClass,
         )}
       >
-        <Image src="/NextNavbar.svg" alt="Nextflix" width={92} height={24} loading="lazy" />
+        <Image src="/NextFlixNav.png" alt="Nextflix" width={121} height={22} loading="lazy" />
         <div className={cn('flex items-center gap-4 transition-colors', mode === 'dark' ? 'text-white/80' : 'text-[#223666]')}>
           <button
             type="button"

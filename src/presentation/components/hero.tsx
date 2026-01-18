@@ -8,6 +8,7 @@ import type { MovieAssets } from '@domain/entities/movie-assets';
 import { TitleOverlay } from '@presentation/components/title-overlay';
 import { useIsDarkTheme } from '@presentation/hooks/use-is-dark-theme';
 import { cn } from '@utils/cn';
+import { env } from '@config/environment';
 
 const truncate = (text: string, limit: number) => {
   if (!text) return '';
@@ -110,12 +111,23 @@ export const Hero = ({ detail, assets }: HeroProps) => {
     : 'flex items-center justify-center gap-3 rounded-full bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white shadow transition hover:bg-slate-800 md:hidden';
 
   const mobileMetaClass = isDark ? 'text-white/70' : 'text-slate-600';
+  const titleFallbackClass = cn(
+    'inline-flex items-center justify-center rounded-[28px] px-6 py-3 text-[32px] font-black uppercase tracking-[-0.02em] backdrop-blur-sm sm:text-5xl lg:text-left lg:text-6xl xl:text-[4.2rem]',
+    isDark
+      ? 'bg-black/70 text-white shadow-[0_28px_55px_rgba(0,0,0,0.6)] ring-1 ring-white/10'
+      : 'bg-white/85 text-slate-900 shadow-[0_28px_55px_rgba(148,163,184,0.45)] ring-1 ring-slate-200/60',
+  );
+
+  const heroVideo = useMemo(
+    () => assets?.previewVideoUrl ?? env.heroPreviewUrl,
+    [assets?.previewVideoUrl],
+  );
 
   return (
     <section
       className={cn(
         sectionClass,
-        'mt-[calc(env(safe-area-inset-top,0px)+6.5rem)] min-h-[520px] transition-colors duration-300 sm:mt-[calc(env(safe-area-inset-top,0px)+7.5rem)] sm:min-h-[640px] md:mt-[calc(env(safe-area-inset-top,0px)+8rem)] md:min-h-[820px] lg:mt-0 lg:min-h-[880px] xl:min-h-[920px]',
+        'mt-[calc(env(safe-area-inset-top,0px)+6rem)] min-h-[500px] transition-colors duration-300 sm:mt-[calc(env(safe-area-inset-top,0px)+6.5rem)] sm:min-h-[560px] md:mt-[calc(env(safe-area-inset-top,0px)+6.5rem)] md:min-h-[640px] lg:mt-0 lg:min-h-[680px] xl:min-h-[720px]',
       )}
     >
       {heroBackground ? (
@@ -136,14 +148,26 @@ export const Hero = ({ detail, assets }: HeroProps) => {
         />
       )}
 
+      {heroVideo ? (
+        <video
+          key={heroVideo}
+          className="absolute inset-0 h-full w-full object-cover"
+          autoPlay
+          muted
+          loop
+          playsInline
+          poster={heroBackground ?? undefined}
+        >
+          <source src={heroVideo} type="video/mp4" />
+        </video>
+      ) : null}
+
       <div className={`${sideOverlayClass} transition-colors duration-300`} />
       <div className={`${bottomOverlayClass} transition-colors duration-300`} />
       <div className={`${topOverlayClass} transition-colors duration-300`} />
 
-      <div className="relative z-10 mx-auto flex h-full w-full max-w-[2560px] flex-col justify-center px-5 pb-16 pt-24 sm:px-8 sm:pb-20 sm:pt-32 md:px-12 md:pt-44 lg:justify-start lg:pb-24 lg:pt-[180px] xl:px-[90px]">
-        <div
-          className="flex w-full flex-col items-center justify-center gap-4 px-2 text-center sm:gap-6 sm:px-6 lg:max-w-[900px] lg:self-start lg:items-start lg:text-left"
-        >
+      <div className="relative z-10 mx-auto flex h-full w-full max-w-[2560px] flex-col justify-center px-5 pb-12 pt-20 sm:px-8 sm:pb-14 sm:pt-26 md:px-12 md:pt-30 lg:justify-start lg:pb-18 lg:pt-[120px] xl:px-[90px]">
+        <div className="flex w-full flex-col items-center justify-center gap-5 px-2 text-center sm:gap-7 sm:px-6 lg:max-w-[880px] lg:self-start lg:items-start lg:text-left">
           <div className="flex items-center justify-center gap-2 sm:gap-3 lg:justify-start">
             <Image
               src="/NextLogo.svg"
@@ -158,17 +182,15 @@ export const Hero = ({ detail, assets }: HeroProps) => {
             </span>
           </div>
 
-          <div className="relative h-[62px] w-full max-w-[240px] sm:h-[126px] sm:max-w-[360px] md:h-[150px] md:max-w-[520px] lg:h-[180px]">
+          <div className="relative h-[62px] w-full max-w-[240px] sm:h-[126px] sm:max-w-[360px] md:h-[150px] md:max-w-[520px] lg:h-[200px]">
             <TitleOverlay
               logoUrl={assets?.logoUrl ?? undefined}
               title={detail.title}
-              wrapperClassName="absolute inset-0 flex items-center justify-center lg:justify-start"
+              wrapperClassName="relative flex h-full w-full items-center justify-center lg:justify-start"
               imageClassName={`object-contain object-center lg:object-left ${
                 isDark ? 'drop-shadow-[0_12px_24px_rgba(0,0,0,0.7)]' : 'drop-shadow-[0_12px_24px_rgba(0,0,0,0.35)]'
               }`}
-              fallbackClassName={`text-[28px] font-black leading-[1.05] text-center sm:text-5xl lg:text-left lg:text-6xl xl:text-[4.2rem] ${
-                isDark ? 'text-white' : 'text-slate-900'
-              }`}
+              fallbackClassName={titleFallbackClass}
               fallbackAs="h1"
               sizes="(max-width: 768px) 60vw, 40vw"
               priority
@@ -178,7 +200,7 @@ export const Hero = ({ detail, assets }: HeroProps) => {
           {overview ? (
             <p
               className={cn(
-                'max-w-2xl text-balance text-sm sm:text-lg md:text-xl lg:text-[28px] lg:leading-[38px]',
+                'max-w-2xl text-pretty text-sm sm:text-lg md:text-xl lg:text-[26px] lg:leading-[36px]',
                 overviewTextClass,
               )}
             >
@@ -187,19 +209,13 @@ export const Hero = ({ detail, assets }: HeroProps) => {
           ) : null}
 
           {metadata.length > 0 ? (
-            <ul
-              className={cn(
-                'mt-2 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs font-semibold uppercase tracking-[0.35em] sm:text-sm',
-                isDark ? 'text-white/70' : 'text-[#3a4f82]',
-              )}
-            >
-              {metadata.map((item, index) => (
-                <li key={item} className="flex items-center gap-4">
-                  <span>{item}</span>
-                  {index < metadata.length - 1 ? <span className="text-xs opacity-40">•</span> : null}
-                </li>
+            <div className="mt-2 flex flex-wrap items-center justify-center gap-3 text-sm font-medium uppercase tracking-[0.32em] sm:text-base lg:justify-start">
+              {metadata.map((item) => (
+                <span key={item} className={cn('rounded-full px-3 py-1', isDark ? 'bg-white/10 text-white/80' : 'bg-slate-900/10 text-slate-700')}>
+                  {item}
+                </span>
               ))}
-            </ul>
+            </div>
           ) : null}
 
           <div className="mt-6 hidden items-center gap-4 md:flex md:gap-5 lg:gap-6">
@@ -248,3 +264,4 @@ export const Hero = ({ detail, assets }: HeroProps) => {
     </section>
   );
 };
+ 

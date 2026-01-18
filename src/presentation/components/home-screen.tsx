@@ -20,8 +20,8 @@ export const HomeScreen = () => {
     : 'relative min-h-screen bg-white text-slate-900';
 
   const railShellClass = isDark
-    ? 'relative z-10 -mt-20 rounded-t-3xl bg-gradient-to-b from-black/60 via-black to-black pb-16 pt-10 sm:-mt-24 md:-mt-32'
-    : 'relative z-10 -mt-20 rounded-t-3xl bg-white pb-16 pt-10 sm:-mt-24 md:-mt-32';
+    ? 'relative z-10 -mt-28 rounded-t-[48px] bg-gradient-to-b from-transparent via-black/85 to-black pb-20 pt-16 backdrop-blur-[1.5px] sm:-mt-32 md:-mt-36'
+    : 'relative z-10 -mt-28 rounded-t-[48px] bg-gradient-to-b from-transparent via-white/80 to-white pb-20 pt-16 backdrop-blur-[1.5px] sm:-mt-32 md:-mt-36';
 
   const heroPayload = featuredQuery.data?.hero ?? null;
 
@@ -98,7 +98,7 @@ export const HomeScreen = () => {
       <main className="flex flex-col">
         {heroPayload ? <Hero detail={heroPayload.detail} assets={heroPayload.assets} /> : <HeroSkeleton />}
         <div className={`${railShellClass} transition-colors duration-300`}>
-          <div className="mx-auto w-full max-w-[2560px] space-y-12 px-6 sm:px-10 lg:px-16 xl:px-[90px]">
+          <div className="mx-auto w-full max-w-[2560px] space-y-14 px-6 sm:px-10 lg:px-16 xl:px-[90px]">
             <Suspense fallback={<RailSkeleton />}>
               <MovieRail title="Popular on Nextflix" movies={otherTrending} />
             </Suspense>

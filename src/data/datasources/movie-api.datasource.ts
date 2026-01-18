@@ -78,4 +78,5 @@ export const mapAssets = (dto: MovieAssetsDto): MovieAssets => ({
   backdropUrl: buildImageUrl(dto.backdropPath, 'w1280'),
   textlessBackdropUrl: buildImageUrl(dto.textlessBackdropPath, 'w1280'),
   logoUrl: buildImageUrl(dto.logoPath, 'w500'),
+  previewVideoUrl: null,
 });

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useRef, type SVGProps } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type SVGProps } from 'react';
 
 import type { MovieSummary } from '@domain/entities/movie';
 import { MovieCard } from '@presentation/components/movie-card';
@@ -27,6 +27,8 @@ const ChevronRightIcon = (props: SVGProps<SVGSVGElement>) => (
 export const MovieRail = ({ title, movies }: MovieRailProps) => {
   const railRef = useRef<HTMLDivElement | null>(null);
   const isDark = useIsDarkTheme();
+  const [isAtStart, setIsAtStart] = useState(true);
+  const [isAtEnd, setIsAtEnd] = useState(false);
 
   const { snapWidth, maskGradient } = useMemo(() => {
     const maskColor = isDark ? 'rgba(0,0,0,1)' : null;
@@ -66,20 +68,63 @@ export const MovieRail = ({ title, movies }: MovieRailProps) => {
     };
   }, [isDark]);
 
+  const updateEdges = useCallback(() => {
+    const container = railRef.current;
+    if (!container) return;
+    const { scrollLeft, scrollWidth, clientWidth } = container;
+    setIsAtStart(scrollLeft <= 8);
+    setIsAtEnd(scrollLeft >= scrollWidth - clientWidth - 8);
+  }, []);
+
+  useEffect(() => {
+    updateEdges();
+  }, [updateEdges, movies.length]);
+
+  const bounce = (direction: 'prev' | 'next') => {
+    const container = railRef.current;
+    if (!container) return;
+    const translate = direction === 'prev' ? '14px' : '-14px';
+    container.animate(
+      [
+        { transform: 'translateX(0)' },
+        { transform: `translateX(${translate})` },
+        { transform: 'translateX(0)' },
+      ],
+      {
+        duration: 320,
+        easing: 'cubic-bezier(0.33, 0.66, 0.4, 1)',
+      },
+    );
+  };
+
   const scrollBy = (direction: 'prev' | 'next') => {
     const container = railRef.current;
     if (!container) return;
+
+    if (direction === 'prev' && isAtStart) {
+      bounce('prev');
+      return;
+    }
+
+    if (direction === 'next' && isAtEnd) {
+      bounce('next');
+      return;
+    }
 
     const amount = snapWidth + 20;
     container.scrollBy({
       left: direction === 'next' ? amount : -amount,
       behavior: 'smooth',
     });
+
+    requestAnimationFrame(updateEdges);
   };
 
   if (movies.length === 0) return null;
 
   const canScroll = movies.length > 1;
+  const showLeftFade = canScroll && !isAtStart;
+  const showRightFade = canScroll && !isAtEnd;
 
   return (
     <section className="relative space-y-4 sm:space-y-5">
@@ -135,6 +180,7 @@ export const MovieRail = ({ title, movies }: MovieRailProps) => {
       </header>
       <div
         ref={railRef}
+        onScroll={updateEdges}
         className="flex gap-4 overflow-x-auto pb-6 pr-2 sm:pr-4 md:pr-0 md:snap-x md:snap-mandatory"
         style={maskGradient ? { WebkitMaskImage: maskGradient, maskImage: maskGradient } : undefined}
       >
@@ -144,7 +190,12 @@ export const MovieRail = ({ title, movies }: MovieRailProps) => {
       </div>
       {canScroll ? (
         <>
-          <div className="pointer-events-none absolute inset-y-[46px] left-0 hidden w-[120px] md:block">
+          <div
+            className={cn(
+              'pointer-events-none absolute inset-y-[46px] left-0 hidden w-[120px] transition-opacity duration-300 md:block',
+              showLeftFade ? 'opacity-100' : 'opacity-0',
+            )}
+          >
             <div
               className={cn(
                 'h-full w-full bg-gradient-to-r transition-opacity duration-300',
@@ -152,13 +203,50 @@ export const MovieRail = ({ title, movies }: MovieRailProps) => {
               )}
             />
           </div>
-          <div className="pointer-events-none absolute inset-y-[46px] right-0 hidden w-[120px] md:block">
+          <div
+            className={cn(
+              'pointer-events-none absolute inset-y-[46px] right-0 hidden w-[120px] transition-opacity duration-300 md:block',
+              showRightFade ? 'opacity-100' : 'opacity-0',
+            )}
+          >
             <div
               className={cn(
                 'h-full w-full bg-gradient-to-l transition-opacity duration-300',
                 isDark ? 'from-black/90 via-black/40 to-transparent' : 'from-white via-white/40 to-transparent',
               )}
             />
+          </div>
+          <div className="pointer-events-none absolute inset-y-0 left-0 right-0 hidden md:block">
+            <div className="absolute left-6 top-1/2 -translate-y-1/2">
+              <button
+                type="button"
+                aria-label="Previous"
+                onClick={() => scrollBy('prev')}
+                className={cn(
+                  'pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full border shadow-lg transition focus:outline-none focus-visible:ring-2',
+                  isDark
+                    ? 'border-white/20 bg-black/60 text-white hover:bg-black focus-visible:ring-white/40'
+                    : 'border-slate-200 bg-white text-slate-900 hover:bg-slate-100 focus-visible:ring-slate-300',
+                )}
+              >
+                <ChevronLeftIcon className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="absolute right-6 top-1/2 -translate-y-1/2">
+              <button
+                type="button"
+                aria-label="Next"
+                onClick={() => scrollBy('next')}
+                className={cn(
+                  'pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full border shadow-lg transition focus:outline-none focus-visible:ring-2',
+                  isDark
+                    ? 'border-white/20 bg-black/60 text-white hover:bg-black focus-visible:ring-white/40'
+                    : 'border-slate-200 bg-white text-slate-900 hover:bg-slate-100 focus-visible:ring-slate-300',
+                )}
+              >
+                <ChevronRightIcon className="h-5 w-5" />
+              </button>
+            </div>
           </div>
         </>
       ) : null}
