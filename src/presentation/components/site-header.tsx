@@ -1,10 +1,18 @@
 'use client';
 
 import Image from 'next/image';
-import { useCallback, useEffect, useState, type SVGProps } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState, type ReactElement, type SVGProps } from 'react';
 import { useTheme } from 'next-themes';
+import { cn } from '@utils/cn';
 
-const desktopNavItems = [
+type ThemeMode = 'light' | 'dark';
+
+type NavItem = {
+  label: string;
+  isActive?: boolean;
+};
+
+const NAV_ITEMS: NavItem[] = [
   { label: 'Home', isActive: true },
   { label: 'TV Shows' },
   { label: 'Movies' },
@@ -12,6 +20,8 @@ const desktopNavItems = [
   { label: 'My List' },
   { label: 'Browse by Languages' },
 ];
+
+const MOBILE_SUB_ITEMS = ['TV Shows', 'Movies', 'Categories'];
 
 const MagnifyingGlassIcon = (props: SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden {...props}>
@@ -33,7 +43,7 @@ const ChevronDownIcon = (props: SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
-const Bars3BottomLeftIcon = (props: SVGProps<SVGSVGElement>) => (
+const BarsIcon = (props: SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden {...props}>
     <path d="M3 7h18" />
     <path d="M3 12h12" />
@@ -41,27 +51,256 @@ const Bars3BottomLeftIcon = (props: SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
-const XMarkIcon = (props: SVGProps<SVGSVGElement>) => (
+const CloseIcon = (props: SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden {...props}>
     <line x1="18" y1="6" x2="6" y2="18" />
     <line x1="6" y1="6" x2="18" y2="18" />
   </svg>
 );
 
+const headerTokens = {
+  light: {
+    desktop: {
+      idle: 'bg-transparent text-[#1a2750]',
+      scrolled: 'bg-white/92 text-[#152040] shadow-[0_8px_22px_rgba(34,52,96,0.18)] backdrop-blur',
+    },
+    mobileTop: {
+      idle: 'bg-transparent text-[#1a2750]',
+      scrolled: 'bg-white/92 text-[#152040] shadow-[0_6px_18px_rgba(32,50,92,0.16)] backdrop-blur',
+    },
+    mobileSub: 'bg-[#e9edf6] text-[#1b2d5a] border-b border-[#c2cbe3]/80',
+    nav: {
+      base: 'relative text-[20px] leading-[28px] tracking-[-0.02em] transition-colors duration-200 focus:outline-none',
+      idle: 'font-medium text-[#3a4f82] hover:text-[#102046] focus-visible:text-[#102046]',
+      active:
+        "font-semibold text-[#102046] focus-visible:text-[#102046] after:absolute after:-bottom-[6px] after:left-0 after:h-[2px] after:w-full after:bg-[#102046] after:content-['']",
+      indicator: 'text-[#102046]',
+    },
+    icon: 'hover:text-[#101e42] focus-visible:text-[#101e42]',
+    accountBadge: 'border-[#c2cadf] bg-white/85 text-[#102046]',
+    drawerSurface: 'bg-white/95 text-[#1c2f5a]',
+    drawerClose: 'hover:text-[#101e3c] focus-visible:ring-[#a2b0d6]',
+    drawerLink: {
+      base: 'flex w-full items-center justify-between rounded-lg px-4 py-3 text-left text-base font-medium transition-colors focus:outline-none focus-visible:ring-2',
+      idle: 'text-[#223666] hover:bg-[#e3e9f7] focus-visible:ring-[#b8c5ea]',
+      active: 'bg-[#102046] text-white focus-visible:ring-[#102046]/50',
+      indicator: 'text-[#c9d4f0]',
+    },
+    drawerFooter: 'text-[#253a6e]',
+  },
+  dark: {
+    desktop: {
+      idle: 'bg-transparent text-white',
+      scrolled: 'bg-black text-white shadow-[0_6px_20px_rgba(0,0,0,0.35)]',
+    },
+    mobileTop: {
+      idle: 'bg-transparent text-white',
+      scrolled: 'bg-black text-white shadow-[0_6px_18px_rgba(0,0,0,0.3)]',
+    },
+    mobileSub: 'bg-black text-white border-b border-white/10',
+    nav: {
+      base: 'relative text-[20px] leading-[28px] tracking-[-0.02em] transition-colors duration-200 focus:outline-none',
+      idle: 'font-medium text-white/80 hover:text-white focus-visible:text-white',
+      active:
+        "font-semibold text-white focus-visible:text-white after:absolute after:-bottom-[6px] after:left-0 after:h-[2px] after:w-full after:bg-white after:content-['']",
+      indicator: 'text-white/70',
+    },
+    icon: 'hover:text-white focus-visible:text-white',
+    accountBadge: 'border-white/30 bg-white/10 text-white',
+    drawerSurface: 'bg-black/95 text-white',
+    drawerClose: 'hover:text-white focus-visible:ring-white/60',
+    drawerLink: {
+      base: 'flex w-full items-center justify-between rounded-lg px-4 py-3 text-left text-base font-medium transition-colors focus:outline-none focus-visible:ring-2',
+      idle: 'text-white/80 hover:bg-white/5 focus-visible:ring-white/30',
+      active: 'bg-white/10 text-white focus-visible:ring-white/40',
+      indicator: 'text-white/70',
+    },
+    drawerFooter: 'text-white/80',
+  },
+} satisfies Record<
+  ThemeMode,
+  {
+    desktop: { idle: string; scrolled: string };
+    mobileTop: { idle: string; scrolled: string };
+    mobileSub: string;
+    nav: { base: string; idle: string; active: string; indicator: string };
+    icon: string;
+    accountBadge: string;
+    drawerSurface: string;
+    drawerClose: string;
+    drawerLink: { base: string; idle: string; active: string; indicator: string };
+    drawerFooter: string;
+  }
+>;
+
+const iconButtonClass = (theme: ThemeMode) => cn('transition focus:outline-none', headerTokens[theme].icon);
+
+const desktopNavLinkClass = (theme: ThemeMode, isActive: boolean) =>
+  cn(headerTokens[theme].nav.base, isActive ? headerTokens[theme].nav.active : headerTokens[theme].nav.idle);
+
+const MobileNavLink = ({ label, theme }: { label: string; theme: ThemeMode }) => (
+  <button
+    type="button"
+    className={cn(
+      'flex items-center gap-1 text-lg font-medium transition focus:outline-none',
+      theme === 'dark' ? 'hover:text-white focus-visible:text-white' : 'hover:text-[#102046] focus-visible:text-[#102046]',
+    )}
+  >
+    {label}
+    {label === 'Categories' ? <span className="text-xs">▾</span> : null}
+  </button>
+);
+
+type ThemeToggleButtonProps = {
+  mode: ThemeMode;
+  mounted: boolean;
+  animating: boolean;
+  onToggle: () => void;
+};
+
+const ThemeToggleButton = memo(({ mode, mounted, animating, onToggle }: ThemeToggleButtonProps) => (
+  <button
+    type="button"
+    onClick={onToggle}
+    aria-label="Toggle theme"
+    aria-pressed={mode === 'dark'}
+    className={cn(
+      'relative inline-flex h-9 w-9 items-center justify-center rounded-full border transition-all duration-300 hover:scale-105 focus:outline-none focus-visible:ring-2',
+      mode === 'dark'
+        ? 'border-black bg-black text-white shadow-[0_0_12px_rgba(255,255,255,0.18)] hover:border-black hover:bg-black focus-visible:ring-white/40'
+        : 'border-slate-300 bg-white text-[#0f1d3a] hover:border-slate-500 hover:bg-white/90 focus-visible:ring-slate-400',
+    )}
+  >
+    {animating && (
+      <span
+        className={cn(
+          'absolute inset-0 animate-ping rounded-full border',
+          mode === 'dark' ? 'border-white/15' : 'border-slate-300/50',
+        )}
+      />
+    )}
+    {!mounted ? null : (
+      <span className={cn('relative block text-lg transition-transform duration-500', animating && 'motion-safe:animate-spin')}>
+        <span
+          className={cn(
+            'absolute inset-0 grid place-items-center transition-all duration-500 transform',
+            mode === 'dark' ? 'opacity-100 rotate-0 scale-100' : 'opacity-0 -rotate-90 scale-0',
+          )}
+        >
+          🌙
+        </span>
+        <span
+          className={cn(
+            'absolute inset-0 grid place-items-center transition-all duration-500 transform',
+            mode === 'dark' ? 'opacity-0 rotate-90 scale-0' : 'opacity-100 rotate-0 scale-100',
+          )}
+        >
+          ☀️
+        </span>
+        <span className="invisible">☀️</span>
+      </span>
+    )}
+  </button>
+));
+ThemeToggleButton.displayName = 'ThemeToggleButton';
+
+type MobileDrawerProps = {
+  open: boolean;
+  theme: ThemeMode;
+  navItems: NavItem[];
+  onClose: () => void;
+  renderThemeToggle: () => ReactElement;
+};
+
+const MobileDrawer = ({ open, theme, navItems, onClose, renderThemeToggle }: MobileDrawerProps) => {
+  if (!open) return null;
+
+  const tokens = headerTokens[theme];
+
+  return (
+    <div className="pointer-events-auto lg:hidden">
+      <div
+        className={cn(
+          'fixed inset-0 z-40 transition-opacity',
+          theme === 'dark' ? 'bg-black/70 backdrop-blur-sm' : 'bg-slate-900/60 backdrop-blur-sm',
+        )}
+        onClick={onClose}
+      />
+      <aside
+        className={cn(
+          'fixed inset-y-0 left-0 z-50 flex w-[82%] max-w-xs flex-col shadow-2xl backdrop-blur-md transition-[transform,opacity] duration-300 ease-out',
+          tokens.drawerSurface,
+        )}
+      >
+        <div className="flex items-center justify-between px-5 pb-4 pt-6">
+          <Image src="/NextFlixNav.png" alt="Nextflix" width={132} height={24} loading="lazy" />
+          <button
+            type="button"
+            aria-label="Close menu"
+            onClick={onClose}
+            className={cn('rounded-full p-2 transition focus:outline-none focus-visible:ring-2', tokens.drawerClose)}
+          >
+            <CloseIcon className="h-6 w-6" />
+          </button>
+        </div>
+        <nav className="flex-1 overflow-y-auto px-5 pb-6">
+          <ul className="space-y-2">
+            {navItems.map((item) => (
+              <li key={item.label}>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className={cn(
+                    tokens.drawerLink.base,
+                    item.isActive ? tokens.drawerLink.active : tokens.drawerLink.idle,
+                  )}
+                >
+                  <span>{item.label}</span>
+                  {item.isActive ? (
+                    <span className={cn('text-xs uppercase tracking-[0.22em]', tokens.drawerLink.indicator)}>
+                      Now
+                    </span>
+                  ) : null}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </nav>
+        <div className={cn('flex items-center justify-between gap-3 px-5 pb-6', tokens.drawerFooter)}>
+          <div className="text-sm font-medium uppercase tracking-[0.1em]">Theme</div>
+          {renderThemeToggle()}
+        </div>
+      </aside>
+    </div>
+  );
+};
+
+const DesktopNav = ({ theme }: { theme: ThemeMode }) => (
+  <ul
+    className={cn('flex items-center gap-7 transition-colors', theme === 'dark' ? 'text-white' : 'text-[#2c3f75]')}
+  >
+    {NAV_ITEMS.map((item) => (
+      <li key={item.label}>
+        <button type="button" className={desktopNavLinkClass(theme, Boolean(item.isActive))}>
+          {item.label}
+        </button>
+      </li>
+    ))}
+  </ul>
+);
+
 export const SiteHeader = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [animating, setAnimating] = useState(false);
-  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const { theme, resolvedTheme, setTheme } = useTheme();
 
-  const closeMobileNav = useCallback(() => {
-    setIsMobileNavOpen(false);
-  }, []);
+  const mode = (resolvedTheme ?? theme ?? 'dark') as ThemeMode;
+  const tokens = headerTokens[mode];
 
-  const toggleMobileNav = useCallback(() => {
-    setIsMobileNavOpen((open) => !open);
-  }, []);
+  const closeMobile = useCallback(() => setMobileOpen(false), []);
+  const toggleMobile = useCallback(() => setMobileOpen((open) => !open), []);
 
   useEffect(() => {
     const onScroll = () => setIsScrolled(window.scrollY > 24);
@@ -70,358 +309,126 @@ export const SiteHeader = () => {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  useEffect(() => setMounted(true), []);
 
   useEffect(() => {
-    if (!isMobileNavOpen) return;
+    if (!mobileOpen) return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        closeMobileNav();
+        closeMobile();
       }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [isMobileNavOpen, closeMobileNav]);
+  }, [mobileOpen, closeMobile]);
 
   useEffect(() => {
-    if (!isMobileNavOpen) {
-      return;
-    }
+    if (!mobileOpen) return;
     const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => {
       document.body.style.overflow = originalOverflow;
     };
-  }, [isMobileNavOpen]);
+  }, [mobileOpen]);
 
-  const currentTheme = (resolvedTheme ?? theme ?? 'dark') as 'light' | 'dark';
-
-  const desktopLightDefault =
-    'bg-gradient-to-b from-[#d8dde9]/95 via-[#a8b4d0]/50 to-transparent text-[#1a2750]';
-  const desktopLightScrolled =
-    'bg-white/92 text-[#152040] shadow-[0_6px_16px_rgba(21,32,64,0.18)] backdrop-blur-md';
-  const desktopDarkDefault = 'bg-black text-white';
-  const desktopDarkScrolled =
-    'bg-black text-white shadow-[0_6px_20px_rgba(0,0,0,0.35)]';
-
-  const desktopClasses = currentTheme === 'dark'
-    ? (isScrolled ? desktopDarkScrolled : desktopDarkDefault)
-    : (isScrolled ? desktopLightScrolled : desktopLightDefault);
-
-  const mobileTopClasses = currentTheme === 'dark'
-    ? (isScrolled
-      ? 'bg-black text-white shadow-[0_6px_18px_rgba(0,0,0,0.3)]'
-      : 'bg-black text-white')
-    : (isScrolled
-      ? 'bg-white/92 text-[#152040] shadow-[0_6px_14px_rgba(21,32,64,0.18)] backdrop-blur-md'
-      : 'bg-gradient-to-b from-[#d8dde9]/95 via-[#a8b4d0]/50 to-transparent text-[#1a2750]');
-
-  const mobileSubClasses = currentTheme === 'dark'
-    ? 'bg-black text-white'
-    : 'bg-[#e9edf6] text-[#1b2d5a]';
-
-  const mobileNavButtonClass = currentTheme === 'dark'
-    ? 'flex items-center gap-1 text-lg font-medium transition hover:text-white focus:outline-none focus-visible:text-white'
-    : 'flex items-center gap-1 text-lg font-medium transition hover:text-[#102046] focus:outline-none focus-visible:text-[#102046]';
-
-  const toggleTheme = () => {
+  const toggleTheme = useCallback(() => {
     if (!mounted) return;
     setAnimating(true);
     setTimeout(() => setAnimating(false), 500);
-    setTheme(currentTheme === 'dark' ? 'light' : 'dark');
-  };
+    setTheme(mode === 'dark' ? 'light' : 'dark');
+  }, [mode, mounted, setTheme]);
 
-  // ปุ่ม Toggle Theme ที่ใช้ซ้ำทั้ง Desktop/Mobile ให้ “สอดคล้องกัน”
-  const ThemeButton = () => (
-    <button
-      type="button"
-      onClick={toggleTheme}
-      aria-label="Toggle theme"
-      aria-pressed={currentTheme === 'dark'}
-      className="relative inline-flex h-9 w-9 items-center justify-center rounded-full
-                 border border-slate-300 bg-white text-[#0f1d3a]
-                 transition-all duration-300 hover:scale-105 hover:border-slate-500 hover:bg-white/90
-                 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400
-                 dark:border-white/30 dark:bg-white/10 dark:text-white dark:hover:border-white/60 dark:hover:bg-white/20
-                 shadow-sm dark:shadow-[0_0_10px_rgba(255,255,255,0.18)]"
-    >
-      {/* วงแหวน pulse เบา ๆ ตอนสลับ */}
-      {animating && (
-        <span className="absolute inset-0 rounded-full border border-slate-300/50 dark:border-white/20 animate-ping" />
-      )}
+  const desktopClass = useMemo(
+    () => (isScrolled ? tokens.desktop.scrolled : tokens.desktop.idle),
+    [isScrolled, tokens.desktop.idle, tokens.desktop.scrolled],
+  );
 
-      {/* กัน hydration mismatch */}
-      {!mounted ? null : (
-        <span
-          className={`relative block text-lg transition-transform duration-500 ${animating ? 'motion-safe:animate-spin' : ''}`}
-        >
-          {/* แสดง “สถานะปัจจุบัน”: dark = 🌙, light = ☀️ */}
-          <span
-            className={`absolute inset-0 grid place-items-center transition-all duration-500 transform
-                       ${currentTheme === 'dark'
-                         ? 'opacity-100 rotate-0 scale-100'
-                         : 'opacity-0 -rotate-90 scale-0'}`}
-          >
-            🌙
-          </span>
-          <span
-            className={`absolute inset-0 grid place-items-center transition-all duration-500 transform
-                       ${currentTheme === 'dark'
-                         ? 'opacity-0 rotate-90 scale-0'
-                         : 'opacity-100 rotate-0 scale-100'}`}
-          >
-            ☀️
-          </span>
-          {/* ทำให้ขนาดปุ่มคงที่ */}
-          <span className="invisible">☀️</span>
-        </span>
-      )}
-    </button>
+  const mobileTopClass = useMemo(
+    () => (isScrolled ? tokens.mobileTop.scrolled : tokens.mobileTop.idle),
+    [isScrolled, tokens.mobileTop.idle, tokens.mobileTop.scrolled],
+  );
+
+  const renderThemeToggle = useCallback(
+    () => <ThemeToggleButton mode={mode} mounted={mounted} animating={animating} onToggle={toggleTheme} />,
+    [animating, mode, mounted, toggleTheme],
   );
 
   return (
     <header className="pointer-events-none fixed inset-x-0 top-0 z-30 flex flex-col">
-      {/* Desktop */}
-      <div
-        className={`pointer-events-auto hidden h-[102px] w-full lg:flex transition-all duration-300 ease-out ${desktopClasses}`}
-      >
+      <div className={cn('pointer-events-auto hidden h-[102px] w-full lg:flex transition-all duration-300 ease-out', desktopClass)}>
         <nav className="mx-auto flex h-full w-full max-w-[2560px] items-center justify-between gap-8 px-6 sm:px-10 lg:px-16 xl:px-[90px]">
           <div className="flex items-center gap-12">
-            <Image src="/NextNavbar.svg" alt="Nextflix" width={139} height={39} priority />
-            <ul
-              className={`flex items-center gap-7 transition-colors ${
-                currentTheme === 'dark'
-                  ? 'text-white'
-                  : 'text-[#2c3f75]'
-              }`}
-            >
-              {desktopNavItems.map((item) => (
-                <li key={item.label}>
-                  <button
-                    type="button"
-                    className={`relative text-[20px] leading-[28px] tracking-[-0.02em] transition-colors duration-200 focus:outline-none ${
-                      currentTheme === 'dark'
-                        ? item.isActive
-                          ? "font-semibold text-white focus-visible:text-white after:absolute after:-bottom-[6px] after:left-0 after:h-[2px] after:w-full after:bg-white after:content-['']"
-                          : 'font-medium text-white/80 hover:text-white focus-visible:text-white'
-                        : item.isActive
-                          ? "font-semibold text-[#102046] focus-visible:text-[#102046] after:absolute after:-bottom-[6px] after:left-0 after:h-[2px] after:w-full after:bg-[#102046] after:content-['']"
-                          : 'font-medium text-[#3a4f82] hover:text-[#102046] focus-visible:text-[#102046]'
-                    }`}
-                  >
-                    {item.label}
-                  </button>
-                </li>
-              ))}
-            </ul>
+            <Image src="/NextFlixNav.png" alt="Nextflix" width={165} height={30} loading="lazy" />
+            <DesktopNav theme={mode} />
           </div>
-          <div
-            className={`flex items-center gap-7 transition-colors ${
-              currentTheme === 'dark' ? 'text-white/90' : 'text-[#2f437a]'
-            }`}
-          >
-            <button
-              type="button"
-              aria-label="Search"
-              className={`transition focus:outline-none ${
-                currentTheme === 'dark'
-                  ? 'hover:text-white focus-visible:text-white'
-                  : 'hover:text-[#101e42] focus-visible:text-[#101e42]'
-              }`}
-            >
+          <div className={cn('flex items-center gap-7 transition-colors', mode === 'dark' ? 'text-white/90' : 'text-[#2f437a]')}>
+            <button type="button" aria-label="Search" className={iconButtonClass(mode)}>
               <MagnifyingGlassIcon className="h-6 w-6" />
             </button>
-            <button
-              type="button"
-              className={`text-[20px] font-medium tracking-[-0.02em] transition focus:outline-none ${
-                currentTheme === 'dark'
-                  ? 'hover:text-white focus-visible:text-white'
-                  : 'hover:text-[#101e42] focus-visible:text-[#101e42]'
-              }`}
-            >
+            <button type="button" className={cn('text-[20px] font-medium tracking-[-0.02em]', iconButtonClass(mode))}>
               Kids
             </button>
-            <button
-              type="button"
-              aria-label="Notifications"
-              className={`transition focus:outline-none ${
-                currentTheme === 'dark'
-                  ? 'hover:text-white focus-visible:text-white'
-                  : 'hover:text-[#101e42] focus-visible:text-[#101e42]'
-              }`}
-            >
+            <button type="button" aria-label="Notifications" className={iconButtonClass(mode)}>
               <BellIcon className="h-6 w-6" />
             </button>
-            
             <button
               type="button"
               aria-label="Account"
-              className={`flex items-center gap-2 transition focus:outline-none ${
-                currentTheme === 'dark'
+              className={cn(
+                'flex items-center gap-2 transition focus:outline-none',
+                mode === 'dark'
                   ? 'text-white hover:text-white focus-visible:text-white'
-                  : 'text-[#102046] hover:text-[#0a182f] focus-visible:text-[#0a182f]'
-              }`}
+                  : 'text-[#102046] hover:text-[#0a182f] focus-visible:text-[#0a182f]',
+              )}
             >
-              <div
-                className={`flex h-8 w-8 items-center justify-center rounded-md border text-sm font-semibold uppercase ${
-                  currentTheme === 'dark'
-                    ? 'border-white/30 bg-white/10 text-white'
-                    : 'border-[#c2cadf] bg-white/80 text-[#102046]'
-                }`}
-              >
+              <div className={cn('flex h-8 w-8 items-center justify-center rounded-md border text-sm font-semibold uppercase', tokens.accountBadge)}>
                 B
               </div>
               <ChevronDownIcon className="h-4 w-4" />
             </button>
-
-            {/* Theme toggle (Desktop) */}
-            <ThemeButton />
-            
+            {renderThemeToggle()}
           </div>
         </nav>
       </div>
 
-      {/* Mobile Top Bar */}
       <div
-        className={`pointer-events-auto flex w-full items-center justify-between px-5 pb-4 pt-[calc(env(safe-area-inset-top,0px)+1.25rem)] lg:hidden transition-all duration-300 ease-out ${mobileTopClasses}`}
+        className={cn(
+          'pointer-events-auto flex w-full items-center justify-between px-5 pb-4 pt-[calc(env(safe-area-inset-top,0px)+1.25rem)] lg:hidden transition-all duration-300 ease-out',
+          mobileTopClass,
+        )}
       >
-        <Image src="/NextNavbar.svg" alt="Nextflix" width={92} height={24} priority />
-        <div
-          className={`flex items-center gap-4 transition-colors ${
-            currentTheme === 'dark'
-              ? 'text-white/80'
-              : 'text-[#223666]'
-          }`}
-        >
+        <Image src="/NextFlixNav.png" alt="Nextflix" width={121} height={22} loading="lazy" />
+        <div className={cn('flex items-center gap-4 transition-colors', mode === 'dark' ? 'text-white/80' : 'text-[#223666]')}>
           <button
             type="button"
             aria-label="Categories"
             aria-controls="mobile-nav-drawer"
-            aria-expanded={isMobileNavOpen}
-            onClick={toggleMobileNav}
-            className={`transition focus:outline-none ${
-              currentTheme === 'dark'
-                ? 'hover:text-white focus-visible:text-white'
-                : 'hover:text-[#102046] focus-visible:text-[#102046]'
-            }`}
+            aria-expanded={mobileOpen}
+            onClick={toggleMobile}
+            className={iconButtonClass(mode)}
           >
-            <Bars3BottomLeftIcon className="h-6 w-6" />
+            <BarsIcon className="h-6 w-6" />
           </button>
-
-          {/* Theme toggle (Mobile) — ใช้คอมโพเนนต์เดียวกันเพื่อความสอดคล้อง */}
-          <ThemeButton />
+          {renderThemeToggle()}
         </div>
       </div>
 
-      {/* Mobile Subnav */}
-      <div className={`pointer-events-auto flex items-center justify-between px-5 pb-4 text-sm font-medium transition-all duration-300 ease-out lg:hidden ${mobileSubClasses}`}>
+      <div
+        className={cn(
+          'pointer-events-auto flex items-center justify-between px-5 pb-4 text-sm font-medium transition-all duration-300 ease-out lg:hidden',
+          tokens.mobileSub,
+        )}
+      >
         <ul className="flex w-full items-center justify-around">
-          <li>
-            <button
-              type="button"
-              className={mobileNavButtonClass}
-            >
-              TV Shows
-            </button>
-          </li>
-          <li>
-            <button
-              type="button"
-              className={mobileNavButtonClass}
-            >
-              Movies
-            </button>
-          </li>
-          <li>
-            <button
-              type="button"
-              className={mobileNavButtonClass}
-            >
-              Categories
-              <span className="text-xs">▾</span>
-            </button>
-          </li>
+          {MOBILE_SUB_ITEMS.map((item) => (
+            <li key={item}>
+              <MobileNavLink label={item} theme={mode} />
+            </li>
+          ))}
         </ul>
       </div>
 
-      {isMobileNavOpen ? (
-        <div className="pointer-events-auto lg:hidden">
-          <div
-            className="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-sm transition-opacity dark:bg-black/70"
-            onClick={closeMobileNav}
-          />
-          <aside
-            id="mobile-nav-drawer"
-            className={`fixed inset-y-0 left-0 z-50 flex w-[82%] max-w-xs flex-col shadow-2xl backdrop-blur-md transition-[transform,opacity] duration-300 ease-out ${
-              currentTheme === 'dark'
-                ? 'bg-black/95 text-white'
-                : 'bg-white/95 text-[#1c2f5a]'
-            }`}
-          >
-            <div className="flex items-center justify-between px-5 pb-4 pt-6">
-              <Image src="/NextNavbar.svg" alt="Nextflix" width={96} height={28} priority />
-              <button
-                type="button"
-                aria-label="Close menu"
-                onClick={closeMobileNav}
-                className={`rounded-full p-2 transition focus:outline-none focus-visible:ring-2 ${
-                  currentTheme === 'dark'
-                    ? 'hover:text-white focus-visible:ring-white/60'
-                    : 'hover:text-[#101e3c] focus-visible:ring-[#a2b0d6]'
-                }`}
-              >
-                <XMarkIcon className="h-6 w-6" />
-              </button>
-            </div>
-            <nav className="flex-1 overflow-y-auto px-5 pb-6">
-              <ul className="space-y-2">
-                {desktopNavItems.map((item) => (
-                  <li key={item.label}>
-                    <button
-                      type="button"
-                      onClick={closeMobileNav}
-                      className={`flex w-full items-center justify-between rounded-lg px-4 py-3 text-left text-base font-medium transition-colors focus:outline-none focus-visible:ring-2 ${
-                        currentTheme === 'dark'
-                          ? item.isActive
-                            ? 'bg-white/10 text-white focus-visible:ring-white/40'
-                            : 'text-white/80 hover:bg-white/5 focus-visible:ring-white/30'
-                          : item.isActive
-                            ? 'bg-[#102046] text-white focus-visible:ring-[#102046]/50'
-                            : 'text-[#223666] hover:bg-[#e3e9f7] focus-visible:ring-[#b8c5ea]'
-                      }`}
-                    >
-                      <span>{item.label}</span>
-                      {item.isActive ? (
-                        <span
-                          className={`text-xs uppercase tracking-[0.22em] ${
-                            currentTheme === 'dark' ? 'text-white/70' : 'text-[#c9d4f0]'
-                          }`}
-                        >
-                          Now
-                        </span>
-                      ) : null}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </nav>
-            <div
-              className={`flex items-center justify-between gap-3 px-5 pb-6 ${
-                currentTheme === 'dark'
-                  ? 'text-white/80'
-                  : 'text-[#253a6e]'
-              }`}
-            >
-              <div className="text-sm font-medium uppercase tracking-[0.1em]">
-                Theme
-              </div>
-              <ThemeButton />
-            </div>
-          </aside>
-        </div>
-      ) : null}
+      <MobileDrawer open={mobileOpen} theme={mode} navItems={NAV_ITEMS} onClose={closeMobile} renderThemeToggle={renderThemeToggle} />
     </header>
   );
 };

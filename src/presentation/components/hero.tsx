@@ -1,13 +1,14 @@
 'use client';
 
 import Image from 'next/image';
-import { useEffect, useMemo, useState, type SVGProps } from 'react';
+import { useMemo, type SVGProps } from 'react';
 
-import type { MovieDetail, MovieSummary } from '@domain/entities/movie';
+import type { MovieDetail } from '@domain/entities/movie';
 import type { MovieAssets } from '@domain/entities/movie-assets';
-import { useDependencies } from '@presentation/providers/dependency-provider';
 import { TitleOverlay } from '@presentation/components/title-overlay';
 import { useIsDarkTheme } from '@presentation/hooks/use-is-dark-theme';
+import { cn } from '@utils/cn';
+import { env } from '@config/environment';
 
 const truncate = (text: string, limit: number) => {
   if (!text) return '';
@@ -21,7 +22,16 @@ const PlayIcon = (props: SVGProps<SVGSVGElement>) => (
 );
 
 const InformationCircleIcon = (props: SVGProps<SVGSVGElement>) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden {...props}>
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={2}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden
+    {...props}
+  >
     <circle cx="12" cy="12" r="9" />
     <line x1="12" y1="8" x2="12" y2="8" />
     <path d="M11.5 11.5h1v5" />
@@ -29,58 +39,35 @@ const InformationCircleIcon = (props: SVGProps<SVGSVGElement>) => (
 );
 
 export type HeroProps = {
-  movie: MovieSummary & { overview?: string };
+  detail: MovieDetail;
+  assets: MovieAssets | null;
 };
 
-export const Hero = ({ movie }: HeroProps) => {
-  const { repository } = useDependencies();
-  const [detail, setDetail] = useState<MovieDetail | null>(null);
-  const [assets, setAssets] = useState<MovieAssets | null>(null);
+export const Hero = ({ detail, assets }: HeroProps) => {
   const isDark = useIsDarkTheme();
 
-  const overview = useMemo(() => {
-    const source = detail?.overview ?? movie.overview ?? '';
-    return truncate(source, 220);
-  }, [detail?.overview, movie.overview]);
+  const overview = useMemo(() => truncate(detail.overview, 220), [detail.overview]);
 
-  useEffect(() => {
-    let cancelled = false;
+  const releaseYear = useMemo(() => {
+    if (!detail.releaseDate) return null;
+    const parsed = new Date(detail.releaseDate);
+    return Number.isNaN(parsed.getTime()) ? null : parsed.getFullYear().toString();
+  }, [detail.releaseDate]);
 
-    repository
-      .getMovieById(movie.id)
-      .then((result) => {
-        if (!cancelled) setDetail(result);
-      })
-      .catch(() => {
-        if (!cancelled) setDetail(null);
-      });
+  const voteAverage = useMemo(() => {
+    if (!detail.voteAverage || detail.voteAverage <= 0) return null;
+    return detail.voteAverage.toFixed(1);
+  }, [detail.voteAverage]);
 
-    return () => {
-      cancelled = true;
-    };
-  }, [movie.id, repository]);
+  const topGenres = useMemo(() => detail.genres.slice(0, 3), [detail.genres]);
 
-  useEffect(() => {
-    let cancelled = false;
-    setAssets(null);
-
-    repository
-      .getMovieAssets(movie.id)
-      .then((result) => {
-        if (!cancelled) {
-          setAssets(result);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setAssets(null);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [movie.id, repository]);
+  const metadata = useMemo(() => {
+    const items: string[] = [];
+    if (releaseYear) items.push(releaseYear);
+    if (voteAverage) items.push(`${voteAverage} ★`);
+    if (topGenres.length > 0) items.push(topGenres.join(', '));
+    return items;
+  }, [releaseYear, topGenres, voteAverage]);
 
   const heroBackground = useMemo(() => {
     if (assets?.textlessBackdropUrl) {
@@ -89,78 +76,121 @@ export const Hero = ({ movie }: HeroProps) => {
     if (assets?.backdropUrl) {
       return assets.backdropUrl;
     }
-    return movie.backdropPath ?? movie.posterPath;
-  }, [assets?.backdropUrl, assets?.textlessBackdropUrl, movie.backdropPath, movie.posterPath]);
+    return detail.backdropPath ?? detail.posterPath;
+  }, [assets?.backdropUrl, assets?.textlessBackdropUrl, detail.backdropPath, detail.posterPath]);
 
   const sectionClass = isDark
-    ? 'relative isolate min-h-[520px] w-full overflow-hidden bg-black text-white'
-    : 'relative isolate min-h-[520px] w-full overflow-hidden bg-white text-slate-900';
+    ? 'relative isolate w-full overflow-hidden bg-black text-white'
+    : 'relative isolate w-full overflow-hidden bg-white text-slate-900';
 
   const sideOverlayClass = isDark
-    ? 'absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent'
-    : 'absolute inset-0 bg-gradient-to-r from-white/80 via-white/40 to-transparent';
+    ? 'absolute inset-0 bg-gradient-to-r from-black/85 via-black/55 to-transparent'
+    : 'absolute inset-0 bg-gradient-to-r from-white/90 via-white/50 to-transparent';
 
   const bottomOverlayClass = isDark
-    ? 'absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-b from-transparent to-[#141414]'
-    : 'absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-b from-transparent via-white/25 to-white/70';
+    ? 'absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-b from-transparent via-black/30 to-[#0b0b0b]'
+    : 'absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-b from-transparent via-white/60 to-white';
 
   const topOverlayClass = isDark
-    ? 'absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/80 via-black/30 to-transparent md:h-40'
-    : 'absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-white/95 via-white/70 to-transparent md:h-40';
+    ? 'absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/85 via-black/40 to-transparent md:h-44'
+    : 'absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-white/95 via-white/70 to-transparent md:h-44';
 
-  const seriesTextClass = isDark ? 'text-[#B9BBB9]' : 'text-slate-600';
-  const overviewTextClass = isDark ? 'text-slate-100' : 'text-slate-700';
+  const seriesTextClass = isDark ? 'text-white/70' : 'text-slate-600';
+  const overviewTextClass = isDark ? 'text-white/80' : 'text-slate-700';
+
   const primaryButtonClass = isDark
-    ? 'inline-flex h-[77px] items-center gap-5 rounded-[8px] bg-white px-7 text-[28px] font-semibold text-black transition hover:bg-white/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-white'
-    : 'inline-flex h-[77px] items-center gap-5 rounded-[8px] bg-slate-900 px-7 text-[28px] font-semibold text-white transition hover:bg-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900/40';
+    ? 'inline-flex items-center gap-3 rounded-full bg-white px-6 py-3 text-lg font-semibold text-black transition hover:bg-white/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 md:px-8 md:py-4 md:text-xl'
+    : 'inline-flex items-center gap-3 rounded-full bg-slate-900 px-6 py-3 text-lg font-semibold text-white transition hover:bg-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900/40 md:px-8 md:py-4 md:text-xl';
 
   const secondaryButtonClass = isDark
-    ? 'inline-flex h-[77px] items-center gap-5 rounded-[8px] bg-[#5D5D5D] px-8 text-[28px] font-semibold text-white transition hover:bg-[#6b6b6b] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80'
-    : 'inline-flex h-[77px] items-center gap-5 rounded-[8px] bg-slate-200 px-8 text-[28px] font-semibold text-slate-900 transition hover:bg-slate-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400';
+    ? 'inline-flex items-center gap-3 rounded-full border border-white/60 px-6 py-3 text-lg font-semibold text-white transition hover:border-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 md:px-8 md:py-4 md:text-xl'
+    : 'inline-flex items-center gap-3 rounded-full border border-slate-300 px-6 py-3 text-lg font-semibold text-slate-900 transition hover:border-slate-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 md:px-8 md:py-4 md:text-xl';
 
   const mobileButtonClass = isDark
-    ? 'flex h-[52px] w-[140px] items-center justify-center gap-3 rounded-[8px] bg-white px-6 text-base font-semibold text-black shadow transition'
-    : 'flex h-[52px] w-[140px] items-center justify-center gap-3 rounded-[8px] bg-slate-900 px-6 text-base font-semibold text-white shadow transition';
+    ? 'flex items-center justify-center gap-3 rounded-full bg-white/90 px-5 py-2.5 text-sm font-semibold text-black shadow transition hover:bg-white md:hidden'
+    : 'flex items-center justify-center gap-3 rounded-full bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white shadow transition hover:bg-slate-800 md:hidden';
 
-  const mobileTextClass = isDark ? 'text-white' : 'text-slate-900';
+  const mobileMetaClass = isDark ? 'text-white/70' : 'text-slate-600';
+  const titleFallbackClass = cn(
+    'inline-flex items-center justify-center rounded-[28px] px-6 py-3 text-[32px] font-black uppercase tracking-[-0.02em] backdrop-blur-sm sm:text-5xl lg:text-left lg:text-6xl xl:text-[4.2rem]',
+    isDark
+      ? 'bg-black/70 text-white shadow-[0_28px_55px_rgba(0,0,0,0.6)] ring-1 ring-white/10'
+      : 'bg-white/85 text-slate-900 shadow-[0_28px_55px_rgba(148,163,184,0.45)] ring-1 ring-slate-200/60',
+  );
+
+  const heroVideo = useMemo(
+    () => assets?.previewVideoUrl ?? env.heroPreviewUrl,
+    [assets?.previewVideoUrl],
+  );
 
   return (
-    <section className={`${sectionClass} mt-[calc(env(safe-area-inset-top,0px)+7.5rem)] transition-colors duration-300 sm:mt-[calc(env(safe-area-inset-top,0px)+8.5rem)] sm:min-h-[660px] md:mt-[calc(env(safe-area-inset-top,0px)+9rem)] md:min-h-[860px] lg:mt-0 lg:min-h-[900px] xl:min-h-[940px]`}>
+    <section
+      className={cn(
+        sectionClass,
+        'mt-[calc(env(safe-area-inset-top,0px)+6rem)] min-h-[500px] transition-colors duration-300 sm:mt-[calc(env(safe-area-inset-top,0px)+6.5rem)] sm:min-h-[560px] md:mt-[calc(env(safe-area-inset-top,0px)+6.5rem)] md:min-h-[640px] lg:mt-0 lg:min-h-[680px] xl:min-h-[720px]',
+      )}
+    >
       {heroBackground ? (
         <Image
           src={heroBackground}
-          alt={movie.title}
+          alt={detail.title}
           fill
           priority
           loading="eager"
-          fetchPriority="high"
-          sizes="100vw"
+          sizes="(max-width: 640px) 100vw, (max-width: 1280px) 75vw, 1900px"
           className="object-cover"
         />
       ) : (
-        <div className={`absolute inset-0 ${isDark ? 'bg-gradient-to-b from-[#1a1a1a] via-[#0f0f0f] to-black' : 'bg-slate-200'}`} />
+        <div
+          className={`absolute inset-0 ${
+            isDark ? 'bg-gradient-to-b from-[#1a1a1a] via-[#0f0f0f] to-black' : 'bg-slate-200'
+          }`}
+        />
       )}
+
+      {heroVideo ? (
+        <video
+          key={heroVideo}
+          className="absolute inset-0 h-full w-full object-cover"
+          autoPlay
+          muted
+          loop
+          playsInline
+          poster={heroBackground ?? undefined}
+        >
+          <source src={heroVideo} type="video/mp4" />
+        </video>
+      ) : null}
 
       <div className={`${sideOverlayClass} transition-colors duration-300`} />
       <div className={`${bottomOverlayClass} transition-colors duration-300`} />
       <div className={`${topOverlayClass} transition-colors duration-300`} />
 
-      <div className="relative z-10 mx-auto flex h-full w-full max-w-[2560px] flex-col justify-center px-5 pb-16 pt-24 sm:px-10 sm:pb-20 sm:pt-36 md:px-12 md:pt-48 lg:justify-start lg:pb-24 lg:pt-[180px] xl:px-[90px]">
-        <div className="flex w-full flex-col items-center justify-center gap-4 px-4 text-center sm:gap-5
-                lg:max-w-[891px] lg:self-start lg:items-start lg:justify-start lg:gap-8 lg:text-left">
-
-          <div className="flex items-center justify-center gap-3 lg:justify-start">
-            <Image src="/NextLogo.svg" alt="Nextflix" width={22} height={36} priority className="h-9 w-auto lg:h-[58px]" />
-            <span className={`text-sm font-semibold uppercase tracking-[0.4em] lg:text-[28px] ${seriesTextClass}`}>Series</span>
+      <div className="relative z-10 mx-auto flex h-full w-full max-w-[2560px] flex-col justify-center px-5 pb-12 pt-20 sm:px-8 sm:pb-14 sm:pt-26 md:px-12 md:pt-30 lg:justify-start lg:pb-18 lg:pt-[120px] xl:px-[90px]">
+        <div className="flex w-full flex-col items-center justify-center gap-5 px-2 text-center sm:gap-7 sm:px-6 lg:max-w-[880px] lg:self-start lg:items-start lg:text-left">
+          <div className="flex items-center justify-center gap-2 sm:gap-3 lg:justify-start">
+            <Image
+              src="/NextLogo.svg"
+              alt="Nextflix"
+              width={22}
+              height={36}
+              className="h-8 w-auto sm:h-9 lg:h-[54px]"
+              loading="lazy"
+            />
+            <span className={cn('text-xs font-semibold uppercase tracking-[0.5em] sm:text-sm lg:text-base', seriesTextClass)}>
+              Series
+            </span>
           </div>
 
-          <div className="relative h-[70px] w-full max-w-[200px] sm:h-[140px] sm:max-w-[360px] md:h-[160px] md:max-w-[520px] lg:h-[180px]">
+          <div className="relative h-[62px] w-full max-w-[240px] sm:h-[126px] sm:max-w-[360px] md:h-[150px] md:max-w-[520px] lg:h-[200px]">
             <TitleOverlay
               logoUrl={assets?.logoUrl ?? undefined}
-              title={movie.title}
-              wrapperClassName="absolute inset-0 flex items-center justify-center lg:justify-start"
-              imageClassName={`object-contain object-center lg:object-left ${isDark ? 'drop-shadow-[0_12px_24px_rgba(0,0,0,0.7)]' : 'drop-shadow-[0_12px_24px_rgba(0,0,0,0.35)]'}`}
-              fallbackClassName={`text-[28px] font-black leading-[1.05] text-center sm:text-5xl lg:text-left lg:text-6xl xl:text-[4.2rem] ${isDark ? 'text-white' : 'text-slate-900'}`}
+              title={detail.title}
+              wrapperClassName="relative flex h-full w-full items-center justify-center lg:justify-start"
+              imageClassName={`object-contain object-center lg:object-left ${
+                isDark ? 'drop-shadow-[0_12px_24px_rgba(0,0,0,0.7)]' : 'drop-shadow-[0_12px_24px_rgba(0,0,0,0.35)]'
+              }`}
+              fallbackClassName={titleFallbackClass}
               fallbackAs="h1"
               sizes="(max-width: 768px) 60vw, 40vw"
               priority
@@ -168,28 +198,53 @@ export const Hero = ({ movie }: HeroProps) => {
           </div>
 
           {overview ? (
-            <p className={`max-w-[889px] text-sm sm:text-lg md:text-xl lg:text-[30px] lg:leading-[38px] ${overviewTextClass}`}>
+            <p
+              className={cn(
+                'max-w-2xl text-pretty text-sm sm:text-lg md:text-xl lg:text-[26px] lg:leading-[36px]',
+                overviewTextClass,
+              )}
+            >
               {overview}
             </p>
           ) : null}
 
-          <div className="mt-4 hidden items-center gap-6 md:flex">
+          {metadata.length > 0 ? (
+            <div className="mt-2 flex flex-wrap items-center justify-center gap-3 text-sm font-medium uppercase tracking-[0.32em] sm:text-base lg:justify-start">
+              {metadata.map((item) => (
+                <span key={item} className={cn('rounded-full px-3 py-1', isDark ? 'bg-white/10 text-white/80' : 'bg-slate-900/10 text-slate-700')}>
+                  {item}
+                </span>
+              ))}
+            </div>
+          ) : null}
+
+          <div className="mt-6 hidden items-center gap-4 md:flex md:gap-5 lg:gap-6">
             <button className={primaryButtonClass}>
-              <span className={`flex h-[51px] w-[51px] items-center justify-center rounded-[6px] ${isDark ? 'text-black' : 'text-white'}`}>
-                <PlayIcon className="ml-[2px] h-[51px] w-[49px]" />
+              <span
+                className={cn(
+                  'flex h-11 w-11 items-center justify-center rounded-full text-lg md:h-12 md:w-12',
+                  isDark ? 'text-black' : 'text-white'
+                )}
+              >
+                <PlayIcon className="ml-[2px] h-6 w-6" />
               </span>
-              <span className="tracking-[-0.04em] text-[40px]">Play</span>
+              <span className="tracking-[-0.03em]">Play</span>
             </button>
             <button className={secondaryButtonClass}>
-              <span className={`flex h-10 w-10 items-center justify-center rounded-full border-[2.5px] text-lg font-semibold leading-none ${isDark ? 'border-white' : 'border-slate-300'}`}>
-                <InformationCircleIcon className="h-[40px] w-[40px]" />
+              <span
+                className={cn(
+                  'flex h-11 w-11 items-center justify-center rounded-full border text-base leading-none md:h-12 md:w-12',
+                  isDark ? 'border-white/80' : 'border-slate-300',
+                )}
+              >
+                <InformationCircleIcon className="h-6 w-6" />
               </span>
-              <span className="tracking-[-0.02em] text-[30px]">More Info</span>
+              <span className="tracking-tight">More Info</span>
             </button>
           </div>
 
-          <div className="mt-8 flex w-full items-center justify-center gap-6 px-1 md:hidden">
-            <button className={`flex w-20 flex-col items-center gap-1 ${mobileTextClass}`}>
+          <div className="mt-6 flex w-full items-center justify-center gap-5 md:hidden">
+            <button className={cn('flex w-16 flex-col items-center gap-1 text-xs font-semibold', mobileMetaClass)}>
               <span className="text-[42px] font-light leading-none">+</span>
               <span className="text-xs font-semibold tracking-[0.03em]">My List</span>
             </button>
@@ -197,8 +252,8 @@ export const Hero = ({ movie }: HeroProps) => {
               <PlayIcon className="h-6 w-6" />
               Play
             </button>
-            <button className={`flex w-20 flex-col items-center gap-1 ${mobileTextClass}`}>
-              <span className={`flex h-12 w-12 items-center justify-center rounded-full border-2 text-base font-semibold leading-none ${isDark ? 'border-white' : 'border-slate-900'}`}>
+            <button className={cn('flex w-16 flex-col items-center gap-1 text-xs font-semibold', mobileMetaClass)}>
+              <span className="flex h-12 w-12 items-center justify-center rounded-full border border-current text-base font-semibold leading-none">
                 i
               </span>
               <span className="text-xs font-semibold tracking-[0.03em]">Info</span>
@@ -209,3 +264,4 @@ export const Hero = ({ movie }: HeroProps) => {
     </section>
   );
 };
+ 

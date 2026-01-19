@@ -1,10 +1,11 @@
 'use client';
 
-import { useMemo, useRef, type SVGProps } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type SVGProps } from 'react';
 
 import type { MovieSummary } from '@domain/entities/movie';
 import { MovieCard } from '@presentation/components/movie-card';
 import { useIsDarkTheme } from '@presentation/hooks/use-is-dark-theme';
+import { cn } from '@utils/cn';
 
 export type MovieRailProps = {
   title: string;
@@ -26,6 +27,8 @@ const ChevronRightIcon = (props: SVGProps<SVGSVGElement>) => (
 export const MovieRail = ({ title, movies }: MovieRailProps) => {
   const railRef = useRef<HTMLDivElement | null>(null);
   const isDark = useIsDarkTheme();
+  const [isAtStart, setIsAtStart] = useState(true);
+  const [isAtEnd, setIsAtEnd] = useState(false);
 
   const { snapWidth, maskGradient } = useMemo(() => {
     const maskColor = isDark ? 'rgba(0,0,0,1)' : null;
@@ -65,47 +68,120 @@ export const MovieRail = ({ title, movies }: MovieRailProps) => {
     };
   }, [isDark]);
 
+  const updateEdges = useCallback(() => {
+    const container = railRef.current;
+    if (!container) return;
+    const { scrollLeft, scrollWidth, clientWidth } = container;
+    setIsAtStart(scrollLeft <= 8);
+    setIsAtEnd(scrollLeft >= scrollWidth - clientWidth - 8);
+  }, []);
+
+  useEffect(() => {
+    updateEdges();
+  }, [updateEdges, movies.length]);
+
+  const bounce = (direction: 'prev' | 'next') => {
+    const container = railRef.current;
+    if (!container) return;
+    const translate = direction === 'prev' ? '14px' : '-14px';
+    container.animate(
+      [
+        { transform: 'translateX(0)' },
+        { transform: `translateX(${translate})` },
+        { transform: 'translateX(0)' },
+      ],
+      {
+        duration: 320,
+        easing: 'cubic-bezier(0.33, 0.66, 0.4, 1)',
+      },
+    );
+  };
+
   const scrollBy = (direction: 'prev' | 'next') => {
     const container = railRef.current;
     if (!container) return;
+
+    if (direction === 'prev' && isAtStart) {
+      bounce('prev');
+      return;
+    }
+
+    if (direction === 'next' && isAtEnd) {
+      bounce('next');
+      return;
+    }
 
     const amount = snapWidth + 20;
     container.scrollBy({
       left: direction === 'next' ? amount : -amount,
       behavior: 'smooth',
     });
+
+    requestAnimationFrame(updateEdges);
   };
 
   if (movies.length === 0) return null;
 
   const canScroll = movies.length > 1;
-
-  const titleClass = isDark
-    ? 'text-[32px] font-bold leading-[42px] tracking-wide text-[#E5E5E5] md:text-[36px] md:leading-[46px]'
-    : 'text-[32px] font-bold leading-[42px] tracking-wide text-slate-900 md:text-[36px] md:leading-[46px]';
-
-  const fadeClass = isDark
-    ? 'pointer-events-none absolute inset-y-[48px] right-0 hidden w-[140px] bg-gradient-to-l from-[#0b0b0b] to-transparent md:block'
-    : 'pointer-events-none absolute inset-y-[48px] right-0 hidden w-[140px] bg-gradient-to-l from-transparent to-transparent md:block';
-
-  const prevButtonClass = isDark
-    ? 'group mr-2 flex h-12 w-12 items-center justify-center rounded-full bg-black/60 text-white transition hover:bg-black'
-    : 'group mr-2 flex h-12 w-12 items-center justify-center rounded-full bg-slate-200/80 text-slate-900 transition hover:bg-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400';
-
-  const nextButtonClass = isDark
-    ? 'group ml-2 flex h-12 w-12 items-center justify-center rounded-full bg-black/60 text-white transition hover:bg-black'
-    : 'group ml-2 flex h-12 w-12 items-center justify-center rounded-full bg-slate-200/80 text-slate-900 transition hover:bg-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400';
+  const showLeftFade = canScroll && !isAtStart;
+  const showRightFade = canScroll && !isAtEnd;
 
   return (
-    <section className="relative space-y-5">
-      <header>
-        <h2 className={`${titleClass} transition-colors duration-300`}>
-          {title}
-        </h2>
+    <section className="relative space-y-4 sm:space-y-5">
+      <header className="flex items-center justify-between">
+        <div>
+          <p
+            className={cn(
+              'text-xs font-semibold uppercase tracking-[0.45em] text-slate-500 transition-colors duration-300',
+              isDark && 'text-white/50',
+            )}
+          >
+            Featured
+          </p>
+          <h2
+            className={cn(
+              'text-2xl font-semibold tracking-tight transition-colors duration-300 sm:text-[28px] lg:text-[32px]',
+              isDark ? 'text-white' : 'text-slate-900',
+            )}
+          >
+            {title}
+          </h2>
+        </div>
+        {canScroll ? (
+          <div className="hidden items-center gap-2 sm:flex">
+            <button
+              type="button"
+              aria-label="Previous"
+              onClick={() => scrollBy('prev')}
+              className={cn(
+                'flex h-10 w-10 items-center justify-center rounded-full border transition focus:outline-none focus-visible:ring-2',
+                isDark
+                  ? 'border-white/20 bg-white/10 text-white hover:bg-white/20 focus-visible:ring-white/30'
+                  : 'border-slate-200 bg-white text-slate-900 hover:bg-slate-100 focus-visible:ring-slate-300',
+              )}
+            >
+              <ChevronLeftIcon className="h-5 w-5" />
+            </button>
+            <button
+              type="button"
+              aria-label="Next"
+              onClick={() => scrollBy('next')}
+              className={cn(
+                'flex h-10 w-10 items-center justify-center rounded-full border transition focus:outline-none focus-visible:ring-2',
+                isDark
+                  ? 'border-white/20 bg-white/10 text-white hover:bg-white/20 focus-visible:ring-white/30'
+                  : 'border-slate-200 bg-white text-slate-900 hover:bg-slate-100 focus-visible:ring-slate-300',
+              )}
+            >
+              <ChevronRightIcon className="h-5 w-5" />
+            </button>
+          </div>
+        ) : null}
       </header>
       <div
         ref={railRef}
-        className="flex gap-3 overflow-x-auto pb-6 pr-4 sm:gap-4 sm:pr-6 md:pr-0 md:snap-x md:snap-mandatory"
+        onScroll={updateEdges}
+        className="flex gap-4 overflow-x-auto pb-6 pr-2 sm:pr-4 md:pr-0 md:snap-x md:snap-mandatory"
         style={maskGradient ? { WebkitMaskImage: maskGradient, maskImage: maskGradient } : undefined}
       >
         {movies.map((movie) => (
@@ -114,26 +190,63 @@ export const MovieRail = ({ title, movies }: MovieRailProps) => {
       </div>
       {canScroll ? (
         <>
-          <div className={`${fadeClass} transition-colors duration-300`} />
-          <div className="absolute inset-y-[48px] left-0 z-30 hidden items-center md:flex">
-            <button
-              type="button"
-              aria-label="Previous"
-              onClick={() => scrollBy('prev')}
-              className={prevButtonClass}
-            >
-              <ChevronLeftIcon className="h-6 w-6" />
-            </button>
+          <div
+            className={cn(
+              'pointer-events-none absolute inset-y-[46px] left-0 hidden w-[120px] transition-opacity duration-300 md:block',
+              showLeftFade ? 'opacity-100' : 'opacity-0',
+            )}
+          >
+            <div
+              className={cn(
+                'h-full w-full bg-gradient-to-r transition-opacity duration-300',
+                isDark ? 'from-black/90 via-black/40 to-transparent' : 'from-white via-white/40 to-transparent',
+              )}
+            />
           </div>
-          <div className="absolute inset-y-[48px] right-0 z-30 hidden items-center md:flex">
-            <button
-              type="button"
-              aria-label="Next"
-              onClick={() => scrollBy('next')}
-              className={nextButtonClass}
-            >
-              <ChevronRightIcon className="h-6 w-6" />
-            </button>
+          <div
+            className={cn(
+              'pointer-events-none absolute inset-y-[46px] right-0 hidden w-[120px] transition-opacity duration-300 md:block',
+              showRightFade ? 'opacity-100' : 'opacity-0',
+            )}
+          >
+            <div
+              className={cn(
+                'h-full w-full bg-gradient-to-l transition-opacity duration-300',
+                isDark ? 'from-black/90 via-black/40 to-transparent' : 'from-white via-white/40 to-transparent',
+              )}
+            />
+          </div>
+          <div className="pointer-events-none absolute inset-y-0 left-0 right-0 hidden md:block">
+            <div className="absolute left-6 top-1/2 -translate-y-1/2">
+              <button
+                type="button"
+                aria-label="Previous"
+                onClick={() => scrollBy('prev')}
+                className={cn(
+                  'pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full border shadow-lg transition focus:outline-none focus-visible:ring-2',
+                  isDark
+                    ? 'border-white/20 bg-black/60 text-white hover:bg-black focus-visible:ring-white/40'
+                    : 'border-slate-200 bg-white text-slate-900 hover:bg-slate-100 focus-visible:ring-slate-300',
+                )}
+              >
+                <ChevronLeftIcon className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="absolute right-6 top-1/2 -translate-y-1/2">
+              <button
+                type="button"
+                aria-label="Next"
+                onClick={() => scrollBy('next')}
+                className={cn(
+                  'pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full border shadow-lg transition focus:outline-none focus-visible:ring-2',
+                  isDark
+                    ? 'border-white/20 bg-black/60 text-white hover:bg-black focus-visible:ring-white/40'
+                    : 'border-slate-200 bg-white text-slate-900 hover:bg-slate-100 focus-visible:ring-slate-300',
+                )}
+              >
+                <ChevronRightIcon className="h-5 w-5" />
+              </button>
+            </div>
           </div>
         </>
       ) : null}

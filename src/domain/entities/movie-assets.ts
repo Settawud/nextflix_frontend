@@ -4,4 +4,5 @@ export type MovieAssets = {
   backdropUrl: string | null;
   textlessBackdropUrl: string | null;
   logoUrl: string | null;
+  previewVideoUrl?: string | null;
 };
